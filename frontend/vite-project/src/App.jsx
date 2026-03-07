@@ -7,6 +7,8 @@ import Signup from './pages/Signup';
 import DashBoard from "./pages/DashBoard.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Footer from './components/Footer';
+
 
 function App() {
     return (
@@ -23,6 +25,7 @@ function App() {
                     </ProtectedRoute>
                 }/>
             </Routes>
+            <Footer/>
         </>
     )
 }
