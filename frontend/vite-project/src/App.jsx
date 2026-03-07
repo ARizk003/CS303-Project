@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import DashBoard from "./pages/DashBoard.jsx";
+import Footer from './components/Footer';
 
 function App() {
     return (
@@ -17,6 +18,7 @@ function App() {
                 <Route path='/login' element={<Login/>}/>
                 <Route path='/dashboard' element={<DashBoard/>}/>
             </Routes>
+            <Footer/>
         </>
     )
 }
