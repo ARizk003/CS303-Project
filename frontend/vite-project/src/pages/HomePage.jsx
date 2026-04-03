@@ -5,8 +5,7 @@ function HomePage() {
         <div>
             <div
                 style={{
-                    backgroundImage:
-                        "url('https://images.unsplash.com/photo-1507842217343-583bb7270b66')",
+                    backgroundImage: "url('/Homepage.jpg')", 
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     height: "80vh",
@@ -23,28 +22,25 @@ function HomePage() {
                         Discover thousands of books and expand your knowledge anytime.
                     </p>
 
-                    <Link to="/register" className="btn btn-warning btn-lg mt-3">
+                    <Link to="/books" className="btn btn-warning btn-lg mt-3">
                         Get Started
                     </Link>
                 </div>
             </div>
 
-
-
-            {/*//////////////////  FOOTER ///////////////////*/}
             <div className="container text-center my-5">
                 <h2 className="mb-4">Why Choose LEARNOVA?</h2>
                 <div className="row">
 
                     <div className="col-md-4">
-                        <h4>📚 Huge Library</h4>
+                        <h4> Huge Library</h4>
                         <p>
                             Access a wide range of books from different categories.
                         </p>
                     </div>
 
                     <div className="col-md-4">
-                        <h4>⚡ Easy Access</h4>
+                        <h4> Easy Access</h4>
                         <p>
                             Read books online anytime from anywhere.
                         </p>
@@ -59,9 +55,6 @@ function HomePage() {
 
                 </div>
             </div>
-        {/*//////////////////////////////////////////////////////////////////////////////////////////*/}
-
-
         </div>
     );
 }
