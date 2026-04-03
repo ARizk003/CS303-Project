@@ -6,7 +6,7 @@ exports.getAllBooks = async (req, res) => {
     res.json(books);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server error at  file : bookController.js ,  function : getAllBooks() ");
+    res.status(500).send("Server error");
   }
 };
 

@@ -1,5 +1,12 @@
-const mongoose = require("mongoose");
 
+
+
+/////////////////////// Duplicated Logic /////////////////////
+
+
+
+// const mongoose = require("mongoose");
+//
 // const UserSchema = new mongoose.Schema({
 //   username: {
 //     type: String,
@@ -19,9 +26,12 @@ const mongoose = require("mongoose");
 //     default: Date.now,
 //   },
 // });
-
 // module.exports = mongoose.model("User", UserSchema);
-// const mongoose = require("mongoose");
+
+
+
+
+const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
   username: {
