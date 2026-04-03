@@ -2,31 +2,65 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const User = require("../models/User");
-const { jwtSecret, jwtExpiration } = require("../config/jwt");
+const {jwtSecret, jwtExpiration} = require("../config/jwt");
 
 
-const otpStore = {}; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////
+
+
+const otpStore = {};
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+    service: "gmail",
+    auth: {
+        //Missing credentials for "PLAIN"
+        // Error: Missing credentials for "PLAIN"
+        //500 error came from here and related to how to set up the project .env files
+
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
 });
 
 
-exports.sendOtp = async (req, res) => {
-  const { email } = req.body;
-  try {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore[email] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 };
 
-    await transporter.sendMail({
-      from: `"LearnNova" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Your OTP Code",
-      html: `
+///////////////////////////////////////////////////////////////////////////////
+exports.sendOtp = async (req, res) => {
+    const {email} = req.body;
+    try {
+        console.log("Email User:", process.env.EMAIL_USER);
+        console.log("Email Pass exists:", process.env.EMAIL_PASS);
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        otpStore[email] = {otp, expiresAt: Date.now() + 10 * 60 * 1000};
+
+        console.log("awaiting transporter to sendEmail");
+
+        await transporter.sendMail({
+            from: `"LearnNova" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: "Your OTP Code",
+            html: `
         <div style="font-family: Arial; text-align: center;">
           <h2>LearnNova Verification</h2>
           <p>Your OTP code is:</p>
@@ -34,250 +68,279 @@ exports.sendOtp = async (req, res) => {
           <p> This code is valid for 10 minutes.</p>
         </div>
       `
-    });
+        });
 
-    res.json({ msg: "OTP sent to your email." });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
+        res.json({msg: "OTP sent to your email."});
+
+    } catch (err) {
+        console.error(err.message);
+        // console.log(err.stack);
+        console.log('I am the 500 server error from authController.js ***********************************');
+        res.status(500).send("Server error");
+    }
 };
+
+//////////////////////////////////////////////////////////////////////////////////
+
+
 exports.verifyOtp = (req, res) => {
-  const { email, otp } = req.body;
-  const record = otpStore[email];
+    const {email, otp} = req.body;
+    const record = otpStore[email];
 
-  if (!record) return res.status(400).json({ msg: "OTP not found. Request a new one." });
-  if (Date.now() > record.expiresAt) {
+    if (!record) return res.status(400).json({msg: "OTP not found. Request a new one."});
+    if (Date.now() > record.expiresAt) {
+        delete otpStore[email];
+        return res.status(400).json({msg: "OTP expired."});
+    }
+    if (record.otp !== otp) return res.status(400).json({msg: "Invalid OTP."});
+
     delete otpStore[email];
-    return res.status(400).json({ msg: "OTP expired." });
-  }
-  if (record.otp !== otp) return res.status(400).json({ msg: "Invalid OTP." });
-
-  delete otpStore[email];
-  res.json({ msg: "Email verified successfully." });
+    res.json({msg: "Email verified successfully."});
 };
+
+
+/////////////////////////////////////////////////// END OF OTP LOGIC///////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////////////////////////////DUPLICATED LOGIC //////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// exports.registerUser = async (req, res) => {
+//     const {username, email, password} = req.body;
+//     try {
+//         let user = await User.findOne({email});
+//         if (user) return res.status(400).json({msg: "User already exists"});
+//
+//         user = new User({username, email, password});
+//         const salt = await bcrypt.genSalt(10);
+//         user.password = await bcrypt.hash(password, salt);
+//         await user.save();
+//
+//         const payload = {user: {id: user.id}};
+//         jwt.sign(payload, jwtSecret, {expiresIn: jwtExpiration}, (err, token) => {
+//             if (err) throw err;
+//             res.json({token});
+//         });
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send("Server error");
+//     }
+// };
+
+
+// /////////////////////////////////////////////////////////////////////////////
+
+
+// exports.loginUser = async (req, res) => {
+//     const {email, password} = req.body;
+//     try {
+//         let user = await User.findOne({email});
+//         if (!user) return res.status(400).json({msg: "Invalid Credentials"});
+//
+//         const isMatch = await bcrypt.compare(password, user.password);
+//         if (!isMatch) return res.status(400).json({msg: "Invalid Credentials"});
+//
+//         const payload = {user: {id: user.id}};
+//         jwt.sign(payload, jwtSecret, {expiresIn: jwtExpiration}, (err, token) => {
+//             if (err) throw err;
+//             res.json({token});
+//         });
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send("Server error");
+//     }
+// };
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//part II
+
+
+//////////////////////////////////////////// DUPLICATED IMPORTS ////////////////////////////////////////////////////////
+
+// const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
+// const User = require("../models/User");
+// const {jwtSecret, jwtExpiration} = require("../config/jwt");
+
 
 exports.registerUser = async (req, res) => {
-  const { username, email, password } = req.body;
-  try {
-    let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ msg: "User already exists" });
+    const {username, email, password} = req.body;
 
-    user = new User({ username, email, password });
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-    await user.save();
+    try {
 
-    const payload = { user: { id: user.id } };
-    jwt.sign(payload, jwtSecret, { expiresIn: jwtExpiration }, (err, token) => {
-      if (err) throw err;
-      res.json({ token });
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
+        let user = await User.findOne({email});
+        if (user) {
+            return res.status(400).json({msg: "User already exists"});
+        }
 
-exports.loginUser = async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    let user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ msg: "Invalid Credentials" });
+        let role = email === "admin@admin.com" ? "admin" : "student";
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ msg: "Invalid Credentials" });
+        user = new User({
+            username,
+            email,
+            password,
+            role
+        });
 
-    const payload = { user: { id: user.id } };
-    jwt.sign(payload, jwtSecret, { expiresIn: jwtExpiration }, (err, token) => {
-      if (err) throw err;
-      res.json({ token });
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-const { jwtSecret, jwtExpiration } = require("../config/jwt");
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
 
+        await user.save();
 
-exports.registerUser = async (req, res) => {
-  const { username, email, password } = req.body;
+        const payload = {
+            user: {
+                id: user.id,
+                role: user.role
+            }
+        };
 
-  try {
+        const token = jwt.sign(payload, jwtSecret, {
+            expiresIn: jwtExpiration
+        });
 
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ msg: "User already exists" });
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (err) {
+
+        console.error(err.message);
+        res.status(500).send("Server error");
+
     }
-
-    let role = email === "admin@admin.com" ? "admin" : "student";
-
-    user = new User({
-      username,
-      email,
-      password,
-      role
-    });
-
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
-    await user.save();
-
-    const payload = {
-      user: {
-        id: user.id,
-        role: user.role
-      }
-    };
-
-    const token = jwt.sign(payload, jwtSecret, {
-      expiresIn: jwtExpiration
-    });
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-
-  } catch (err) {
-
-    console.error(err.message);
-    res.status(500).send("Server error");
-
-  }
 };
-
-
+///////////////////////////////////////////////////////////////////////////////////
 
 exports.loginUser = async (req, res) => {
 
-  const { email, password } = req.body;
+    const {email, password} = req.body;
 
-  try {
+    try {
 
-    let user = await User.findOne({ email });
+        let user = await User.findOne({email});
 
-    if (!user) {
-      return res.status(400).json({ msg: "Invalid credentials" });
+        if (!user) {
+            return res.status(400).json({msg: "Invalid credentials"});
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({msg: "Invalid credentials"});
+        }
+
+        const payload = {
+            user: {
+                id: user.id,
+                role: user.role
+            }
+        };
+
+        const token = jwt.sign(payload, jwtSecret, {
+            expiresIn: jwtExpiration
+        });
+
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (err) {
+
+        console.error(err.message);
+        res.status(500).send("Server error");
+
     }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(400).json({ msg: "Invalid credentials" });
-    }
-
-    const payload = {
-      user: {
-        id: user.id,
-        role: user.role
-      }
-    };
-
-    const token = jwt.sign(payload, jwtSecret, {
-      expiresIn: jwtExpiration
-    });
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-
-  } catch (err) {
-
-    console.error(err.message);
-    res.status(500).send("Server error");
-
-  }
 
 };
-
-
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 exports.updateUserRole = async (req, res) => {
 
-  const { userId, role } = req.body;
+    const {userId, role} = req.body;
 
-  try {
+    try {
 
-    const user = await User.findById(userId);
+        const user = await User.findById(userId);
 
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+        if (!user) {
+            return res.status(404).json({msg: "User not found"});
+        }
+
+        if (!["admin", "student"].includes(role)) {
+            return res.status(400).json({msg: "Invalid role"});
+        }
+
+        user.role = role;
+
+        await user.save();
+
+        res.json({
+            msg: "User role updated successfully",
+            user
+        });
+
+    } catch (err) {
+
+        console.error(err.message);
+        res.status(500).send("Server error");
+
     }
-
-    if (!["admin", "student"].includes(role)) {
-      return res.status(400).json({ msg: "Invalid role" });
-    }
-
-    user.role = role;
-
-    await user.save();
-
-    res.json({
-      msg: "User role updated successfully",
-      user
-    });
-
-  } catch (err) {
-
-    console.error(err.message);
-    res.status(500).send("Server error");
-
-  }
 
 };
-
-
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 exports.getAllUsers = async (req, res) => {
 
-  try {
+    try {
 
-    const users = await User.find().select("-password");
+        const users = await User.find().select("-password");
 
-    res.json(users);
+        res.json(users);
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error(err.message);
-    res.status(500).send("Server error");
+        console.error(err.message);
+        res.status(500).send("Server error");
 
-  }
+    }
 
 };
-
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 exports.getMe = async (req, res) => {
 
-  try {
+    try {
 
-    const user = await User
-      .findById(req.user.id)
-      .select("-password");
+        const user = await User
+            .findById(req.user.id)
+            .select("-password");
 
-    res.json(user);
+        res.json(user);
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error(err.message);
-    res.status(500).send("Server error");
+        console.error(err.message);
+        res.status(500).send("Server error");
 
-  }
+    }
 
 };
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
