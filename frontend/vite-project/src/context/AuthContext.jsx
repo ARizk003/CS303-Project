@@ -4,13 +4,23 @@ import {createContext, useState, useEffect} from "react";
 export const AuthContext = createContext()
 
 export const AuthProvider = ({children}) => {
+
+
+
+    // DATA
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+//////////////////////////////////////////////////////////////////////////////
 
 
+
+//////////////////////ONE TIME RENDER///////////////////////////////
+
+
+    //takes the token
     useEffect(() => {
         const token = localStorage.getItem("token");
         const userData = localStorage.getItem("user");
@@ -21,7 +31,9 @@ export const AuthProvider = ({children}) => {
         }
         setLoading(false);
     }, []);
+/////////////////////////////////////////////////////////////////////////////
 
+/////////////////////// HANDLE LOGIN ///////////////////////////////////////
     const login = (token, userData) => {
         localStorage.setItem("token", token);
         if (userData) {
@@ -31,12 +43,17 @@ export const AuthProvider = ({children}) => {
             setUser({ token });
         }
     };
+    ///////////////////////////////////////////////////////////////////
 
+///////////////////HANDLE LOGOUT/////////////////////////////
     const logout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
     };
+//////////////////////////////////////////////////////////////////
+
+///////////////////////////HANDLE SIGNUP////////////////////////////////////////////////////
 
     const signup = async ({username, email, password}) => {
 
@@ -57,6 +74,9 @@ export const AuthProvider = ({children}) => {
         }
 
     }
+
+/////////////////////////////////////////////////////////////////////////////////////
+
     return (
         <AuthContext.Provider value={{user, login, logout, loading, signup}}>
             {children}

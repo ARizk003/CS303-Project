@@ -4,7 +4,6 @@ import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import DashBoard from "./pages/DashBoard.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from './components/Footer';
@@ -18,7 +17,6 @@ function App() {
                 <Route path="/" element={<HomePage/>}/>
                 <Route path='/register' element={<Signup/>}/>
                 <Route path='/login' element={<Login/>}/>
-                <Route path='/dashboard' element={<DashBoard/>}/>
                 <Route path='/admin-dashboard' element={
                     <ProtectedRoute adminOnly={true}>
                         <AdminDashboard/>

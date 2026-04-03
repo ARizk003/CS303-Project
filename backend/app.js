@@ -5,6 +5,10 @@ const authRoutes = require('./routes/auth');
 const usersRoutes = require("./routes/users");
 const cors = require('cors');
 
+// for network connectin problems
+const dns = require('node:dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 const app = express();
 
 connectDB();

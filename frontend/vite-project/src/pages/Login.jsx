@@ -1,9 +1,10 @@
-import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from "react-router-dom";
+import React, {useContext, useState} from 'react';
+import {Link, useNavigate} from "react-router-dom";
 import axios from "axios";
-import { AuthContext } from '../context/AuthContext';
-import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
-import * as jwtDecode from "jwt-decode";
+import {AuthContext} from '../context/AuthContext';
+import {GoogleLogin} from '@react-oauth/google';
+// import * as jwtDecode from "jwt-decode";
+import {jwtDecode} from 'jwt-decode';
 
 function Login() {
 
@@ -12,12 +13,14 @@ function Login() {
     const [otp, setOtp] = useState('');
     const [showOtp, setShowOtp] = useState(false);
 
-    const { login } = useContext(AuthContext);
+    const {login} = useContext(AuthContext);
     const navigate = useNavigate();
 
-    const emailRegex = /^[^\s@]+@admin\.com$/;
+    // const emailRegex = /^[^\s@]+@admin\.com$/;
 
-    // LOGIN NORMAL
+
+    //////////////////////////////// LOGIN NORMAL ////////////////////////////////////////////////////
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -31,36 +34,52 @@ function Login() {
 
             if (res.data.user && res.data.user.role === 'admin') {
                 navigate("/admin-dashboard");
-            } else if (emailRegex.test(email)) {
-
-            if (emailRegex.test(email)) {
-
-                navigate("/dashboard");
-            } else {
-                navigate("/");
             }
-
-        } 
-    }catch (err) {
+            //     else if (emailRegex.test(email)) {
+            //
+            //         if (emailRegex.test(email)) {
+            //
+            //             navigate("/dashboard");
+            //         } else {
+            //             navigate("/");
+            //         }
+            //
+            // }
+        } catch (err) {
             alert(err.response?.data?.msg || "Login failed");
-        };
+        }
+    }
 
-    // GOOGLE LOGIN
+    //////////////////////////////////////////////////////////////////////////////////
+
+
+
+    ///////////////////// GOOGLE LOGIN////////////////////////////////////////////////
+
     const handleGoogleSuccess = async (credentialResponse) => {
 
+
+        // Uncaught (in promise) TypeError: jwtDecode is not a function
+        //  at Object.handleGoogleSuccess [as current] (Login.jsx:59:96)
+
+
         // هنا استخدمنا jwtDecode بالشكل الصحيح
-        const decoded = jwtDecode.default ? jwtDecode.default(credentialResponse.credential) : jwtDecode(credentialResponse.credential);
+        // const decoded = jwtDecode.default ? jwtDecode.default(credentialResponse.credential) : jwtDecode(credentialResponse.credential);
+        const decoded = jwtDecode(credentialResponse.credential);
         const googleEmail = decoded.email;
 
         try {
 
-            await axios.post("http://localhost:5000/api/auth/google-send-otp", {
+            // Login.jsx:71
+            // POST http://localhost:5000/api/auth/google-send-otp 404 (Not Found)
+
+                //fixed route name
+                await axios.post("http://localhost:5000/api/auth/send-otp", {
                 email: googleEmail
             });
 
             setEmail(googleEmail);
             setShowOtp(true);
-
             alert("OTP sent to your email");
 
         } catch (err) {
@@ -68,38 +87,33 @@ function Login() {
         }
     };
 
+    ////////////////////////////////////////////////////////////////////////////////////////
+
+
     // VERIFY OTP
     const verifyOtp = async () => {
-
         try {
 
-            const res = await axios.post("http://localhost:5000/api/auth/google-verify-otp", {
+            // fixed route name
+            const res = await axios.post("http://localhost:5000/api/auth/verify-otp", {
                 email,
                 otp
             });
-
             login(res.data.token);
             navigate("/");
-            
 
         } catch (err) {
             alert("Invalid OTP");
         }
-
     };
-
     return (
-
         <div className="d-flex justify-content-center align-items-center bg-secondary vh-100">
-
             <div className="bg-white p-3 rounded w-25">
 
-                <h2>Login</h2>
 
                 {/* NORMAL LOGIN */}
-
+                <h2>Login</h2>
                 <form onSubmit={handleSubmit} className="p-4">
-
                     <div className="mb-3">
                         <label><strong>Email</strong></label>
                         <input
@@ -109,7 +123,6 @@ function Login() {
                             onChange={(e) => setEmail(e.target.value)}
                         />
                     </div>
-
                     <div className="mb-3">
                         <label><strong>Password</strong></label>
                         <input
@@ -119,64 +132,59 @@ function Login() {
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
-
                     <button className="btn btn-success w-100">
                         Login
                     </button>
-
                 </form>
-
                 <p>Don't have an account?</p>
-
                 <Link to="/register" className="btn btn-light border w-100">
                     Register
                 </Link>
 
+
                 {/* GOOGLE LOGIN */}
 
-                <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+                {/*MOVED GoogleOAuthProvider TO main.jsx and wrapped <App/> by it
+                    because of the error :
 
-                    <div className="mt-3">
+                    [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times.
+                    This could cause unexpected behavior and only the last initialized instance will be used.
+                */}
 
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={() => console.log("Google Login Failed")}
-                        />
-
-                    </div>
-
-                </GoogleOAuthProvider>
+                {/*<GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>*/}
+                <div className="mt-3">
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => console.log("Google Login Failed")}
+                    />
+                </div>
+                {/*</GoogleOAuthProvider>*/}
 
 
                 {/* OTP INPUT */}
 
                 {showOtp && (
-
                     <div className="mt-3">
-
                         <input
                             type="text"
                             placeholder="Enter OTP"
                             className="form-control mb-2"
                             onChange={(e) => setOtp(e.target.value)}
                         />
-
                         <button
                             className="btn btn-primary w-100"
                             onClick={verifyOtp}
                         >
                             Verify OTP
                         </button>
-
                     </div>
-
                 )}
 
             </div>
 
         </div>
     );
-}
+
 }
 
 export default Login;

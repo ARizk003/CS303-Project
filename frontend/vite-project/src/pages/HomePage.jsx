@@ -28,6 +28,10 @@ function HomePage() {
                     </Link>
                 </div>
             </div>
+
+
+
+            {/*//////////////////  FOOTER ///////////////////*/}
             <div className="container text-center my-5">
                 <h2 className="mb-4">Why Choose LEARNOVA?</h2>
                 <div className="row">
@@ -55,6 +59,8 @@ function HomePage() {
 
                 </div>
             </div>
+        {/*//////////////////////////////////////////////////////////////////////////////////////////*/}
+
 
         </div>
     );
