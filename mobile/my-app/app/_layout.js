@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 import { AuthProvider } from "../context/AuthContext";
 import { View, Text, StyleSheet } from "react-native";
 import LogoHeader from "../components/LogoHeader";
+import ChatbotButton from "../components/ChatbotButton";
 
 function TabIcon({ icon, label, focused }) {
   return (
@@ -15,51 +16,56 @@ function TabIcon({ icon, label, focused }) {
 export default function Layout() {
   return (
     <AuthProvider>
-      <Tabs
-        screenOptions={{
-          header: () => <LogoHeader />,
-          tabBarStyle: styles.tabBar,
-          tabBarShowLabel: false,
-        }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon icon="🏠" label="Home" focused={focused} />
-            ),
+      <View style={{ flex: 1 }}>
+        <Tabs
+          screenOptions={{
+            header: () => <LogoHeader />,
+            tabBarStyle: styles.tabBar,
+            tabBarShowLabel: false,
           }}
-        />
-        <Tabs.Screen
-          name="search"
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon icon="🔍" label="Search" focused={focused} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="categories"
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon icon="⊞" label="Categories" focused={focused} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon icon="👤" label="Profile" focused={focused} />
-            ),
-          }}
-        />
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              tabBarIcon: ({ focused }) => (
+                <TabIcon icon="🏠" label="Home" focused={focused} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="search"
+            options={{
+              tabBarIcon: ({ focused }) => (
+                <TabIcon icon="🔍" label="Search" focused={focused} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="categories"
+            options={{
+              tabBarIcon: ({ focused }) => (
+                <TabIcon icon="⊞" label="Categories" focused={focused} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              tabBarIcon: ({ focused }) => (
+                <TabIcon icon="👤" label="Profile" focused={focused} />
+              ),
+            }}
+          />
 
-        <Tabs.Screen name="auth/login" options={{ href: null }} />
-        <Tabs.Screen name="auth/register" options={{ href: null }} />
-        <Tabs.Screen name="dashboard" options={{ href: null }} />
-        <Tabs.Screen name="admin-dashboard" options={{ href: null }} />
-      </Tabs>
+          <Tabs.Screen name="auth/login" options={{ href: null }} />
+          <Tabs.Screen name="auth/register" options={{ href: null }} />
+          <Tabs.Screen name="dashboard" options={{ href: null }} />
+          <Tabs.Screen name="admin-dashboard" options={{ href: null }} />
+        </Tabs>
+
+        {/* Floating chatbot button — sits above all screens */}
+        <ChatbotButton />
+      </View>
     </AuthProvider>
   );
 }

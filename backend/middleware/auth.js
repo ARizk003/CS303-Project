@@ -1,8 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require("../config/jwt");
 
-<<<<<<< HEAD
-=======
 
 
 
@@ -35,7 +33,6 @@ const { jwtSecret } = require("../config/jwt");
 
 
 
->>>>>>> df07846d554141f43841149cc0b071663c112f62
 const auth = (req, res, next) => {
 
   const token = req.header("x-auth-token");
