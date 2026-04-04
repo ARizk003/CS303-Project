@@ -6,12 +6,6 @@ const { jwtSecret, jwtExpiration } = require("../config/jwt");
 
 
 
-
-
-
-/////////////////////////////// OTP LOGIC //////////////////////////////////////////////////////
-
-
 const otpStore = {};
 
 const transporter = nodemailer.createTransport({
@@ -24,7 +18,6 @@ const transporter = nodemailer.createTransport({
 
 
 
-//-------------------------------------------------------------------------------------------
 
 
 exports.sendOtp = async (req, res) => {
@@ -55,9 +48,6 @@ exports.sendOtp = async (req, res) => {
 };
 
 
-// ----------------------------------------------------------------------------------------------
-
-
 exports.verifyOtp = (req, res) => {
   const { email, otp } = req.body;
   const record = otpStore[email];
@@ -73,80 +63,6 @@ exports.verifyOtp = (req, res) => {
   res.json({ msg: "Email verified successfully." });
 };
 
-
-///////////////////////////////////// END OF OTP LOGIC /////////////////////////////////////
-
-
-
-
-///////////////////////////////////////// DUPLICATED LOGIC ///////////////////////////////////////
-
-// exports.registerUser = async (req, res) => {
-//   const { username, email, password } = req.body;
-//   try {
-//     let user = await User.findOne({ email });
-//     if (user) return res.status(400).json({ msg: "User already exists" });
-//
-//     user = new User({ username, email, password });
-//     const salt = await bcrypt.genSalt(10);
-//     user.password = await bcrypt.hash(password, salt);
-//     await user.save();
-//
-//     const payload = { user: { id: user.id } };
-//     jwt.sign(payload, jwtSecret, { expiresIn: jwtExpiration }, (err, token) => {
-//       if (err) throw err;
-//       res.json({ token });
-//     });
-//   } catch (err) {
-//     console.error(err.message);
-//     res.status(500).send("Server error");
-//   }
-// };
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-// ------------------------------------------------------------------------------------------------
-
-// exports.loginUser = async (req, res) => {
-//   const { email, password } = req.body;
-//   try {
-//     let user = await User.findOne({ email });
-//     if (!user) return res.status(400).json({ msg: "Invalid Credentials" });
-//
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     if (!isMatch) return res.status(400).json({ msg: "Invalid Credentials" });
-//
-//     const payload = { user: { id: user.id } };
-//     jwt.sign(payload, jwtSecret, { expiresIn: jwtExpiration }, (err, token) => {
-//       if (err) throw err;
-//       res.json({ token });
-//     });
-//   } catch (err) {
-//     console.error(err.message);
-//     res.status(500).send("Server error");
-//   }
-// };
-
-
-
-
-
-// const bcrypt = require("bcryptjs");
-// const jwt = require("jsonwebtoken");
-// const User = require("../models/User");
-// const { jwtSecret, jwtExpiration } = require("../config/jwt");
-
-
-
-/////////////////////////////////// END OF DUPLICATED LOGIC //////////////////////////////////
-
-
-
-
-
-
-//----------------------------------------------------------------------------------------------
-
 exports.registerUser = async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -157,8 +73,10 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ msg: "User already exists" });
     }
 
-    let role = email === "admin@admin.com" ? "admin" : "student";
-
+    let role = email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()
+    ? "admin"
+    : "student";
+    
     user = new User({
       username,
       email,
@@ -200,7 +118,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// ----------------------------------------------------------------------------------------------------
+
 
 exports.loginUser = async (req, res) => {
 
@@ -250,7 +168,7 @@ exports.loginUser = async (req, res) => {
 
 };
 
-//--------------------------------------------------------------------------------------------
+
 
 exports.updateUserRole = async (req, res) => {
 
@@ -262,6 +180,11 @@ exports.updateUserRole = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
+    }
+
+
+    if (user.role === "admin") {
+      return res.status(403).json({ msg: "Cannot change the role of another admin" });
     }
 
     if (!["admin", "student"].includes(role)) {
@@ -286,8 +209,6 @@ exports.updateUserRole = async (req, res) => {
 
 };
 
-// -----------------------------------------------------------------------------------------
-
 exports.getAllUsers = async (req, res) => {
 
   try {
@@ -305,7 +226,7 @@ exports.getAllUsers = async (req, res) => {
 
 };
 
-//-----------------------------------------------------------------------------------------------
+
 
 exports.getMe = async (req, res) => {
 
