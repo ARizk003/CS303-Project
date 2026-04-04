@@ -1,18 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-const auth = require("../middleware/auth");
-const { adminOnly } = require("../middleware/auth");
-
+const { auth, adminOnly } = require("../middleware/auth");
 const authController = require("../controllers/authController");
-
 
 router.get("/", auth, adminOnly, authController.getAllUsers);
 
-
 router.get("/:id", auth, adminOnly, async (req, res) => {
   try {
-
     const User = require("../models/User");
 
     const user = await User
@@ -28,22 +23,15 @@ router.get("/:id", auth, adminOnly, async (req, res) => {
     res.json(user);
 
   } catch (err) {
-
     console.error(err.message);
     res.status(500).send("Server error");
-
   }
 });
 
-
-
 router.put("/role/update", auth, adminOnly, authController.updateUserRole);
 
-
 router.delete("/:id", auth, adminOnly, async (req, res) => {
-
   try {
-
     const User = require("../models/User");
 
     const user = await User.findById(req.params.id);
@@ -61,13 +49,9 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
     });
 
   } catch (err) {
-
     console.error(err.message);
     res.status(500).send("Server error");
-
   }
-
 });
-
 
 module.exports = router;

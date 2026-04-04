@@ -4,9 +4,13 @@ const nodemailer = require("nodemailer");
 const User = require("../models/User");
 const { jwtSecret, jwtExpiration } = require("../config/jwt");
 
+<<<<<<< HEAD
+const otpStore = {}; 
+=======
 
 
 const otpStore = {};
+>>>>>>> df07846d554141f43841149cc0b071663c112f62
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -16,10 +20,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+<<<<<<< HEAD
+=======
 
 
 
 
+>>>>>>> df07846d554141f43841149cc0b071663c112f62
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
   try {
@@ -47,7 +54,10 @@ exports.sendOtp = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> df07846d554141f43841149cc0b071663c112f62
 exports.verifyOtp = (req, res) => {
   const { email, otp } = req.body;
   const record = otpStore[email];
@@ -118,8 +128,6 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-
-
 exports.loginUser = async (req, res) => {
 
   const { email, password } = req.body;
@@ -167,8 +175,6 @@ exports.loginUser = async (req, res) => {
   }
 
 };
-
-
 
 exports.updateUserRole = async (req, res) => {
 
@@ -225,8 +231,6 @@ exports.getAllUsers = async (req, res) => {
   }
 
 };
-
-
 
 exports.getMe = async (req, res) => {
 

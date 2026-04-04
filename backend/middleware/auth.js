@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require("../config/jwt");
 
+<<<<<<< HEAD
+=======
 
 
 
@@ -33,6 +35,7 @@ const { jwtSecret } = require("../config/jwt");
 
 
 
+>>>>>>> df07846d554141f43841149cc0b071663c112f62
 const auth = (req, res, next) => {
 
   const token = req.header("x-auth-token");
@@ -61,8 +64,6 @@ const auth = (req, res, next) => {
 
 };
 
-
-
 const adminOnly = (req, res, next) => {
 
   if (req.user.role !== "admin") {
@@ -77,9 +78,6 @@ const adminOnly = (req, res, next) => {
 
 };
 
-
-
-
 const studentOnly = (req, res, next) => {
 
   if (req.user.role !== "student") {
@@ -93,7 +91,6 @@ const studentOnly = (req, res, next) => {
   next();
 
 };
-
 
 module.exports = auth;
 module.exports.adminOnly = adminOnly;
