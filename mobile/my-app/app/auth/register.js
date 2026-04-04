@@ -5,11 +5,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
+import OtpModal from '../../components/OtpModal';
 
 export default function Register() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otpVisible, setOtpVisible] = useState(false);
   const { signup } = useContext(AuthContext);
   const router = useRouter();
 
@@ -24,6 +26,15 @@ export default function Register() {
     } else {
       Alert.alert('Error', result.msg);
     }
+  };
+
+  // After OTP verified
+  const handleOtpVerified = (verifiedEmail) => {
+    setEmail(verifiedEmail);
+    Alert.alert(
+      'Email Verified',
+      'Your email has been verified. Please complete your username and password to finish registration.',
+    );
   };
 
   return (
@@ -83,10 +94,16 @@ export default function Register() {
         <View style={styles.dividerLine} />
       </View>
 
-      <TouchableOpacity style={styles.socialBtn}>
+      <TouchableOpacity style={styles.socialBtn} onPress={() => setOtpVisible(true)}>
         <Text style={styles.googleG}>G</Text>
         <Text style={styles.socialText}>Google</Text>
       </TouchableOpacity>
+
+      <OtpModal
+        visible={otpVisible}
+        onClose={() => setOtpVisible(false)}
+        onVerified={handleOtpVerified}
+      />
     </ScrollView>
   );
 }

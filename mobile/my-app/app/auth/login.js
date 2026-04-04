@@ -6,10 +6,12 @@ import {
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
+import OtpModal from '../../components/OtpModal';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otpVisible, setOtpVisible] = useState(false);
   const { login } = useContext(AuthContext);
   const router = useRouter();
 
@@ -19,12 +21,21 @@ export default function Login() {
       return;
     }
     try {
-      const res = await axios.post('http://192.168.1.4:5000/api/auth/login', { email, password });
+      const res = await axios.post('http://192.168.1.8:5000/api/auth/login', { email, password });
       await login(res.data.token, res.data.user);
       router.push('/dashboard');
     } catch (err) {
       Alert.alert('Error', err.response?.data?.msg || 'Login failed');
     }
+  };
+
+  // Called after OTP is verified 
+  const handleOtpVerified = (verifiedEmail) => {
+    setEmail(verifiedEmail);
+    Alert.alert(
+      'Email Verified',
+      'Your email has been verified. Please enter your password to continue.',
+    );
   };
 
   return (
@@ -79,10 +90,16 @@ export default function Login() {
         <View style={styles.dividerLine} />
       </View>
 
-      <TouchableOpacity style={styles.socialBtn}>
+      <TouchableOpacity style={styles.socialBtn} onPress={() => setOtpVisible(true)}>
         <Text style={styles.googleG}>G</Text>
         <Text style={styles.socialText}>Google</Text>
       </TouchableOpacity>
+
+      <OtpModal
+        visible={otpVisible}
+        onClose={() => setOtpVisible(false)}
+        onVerified={handleOtpVerified}
+      />
     </ScrollView>
   );
 }

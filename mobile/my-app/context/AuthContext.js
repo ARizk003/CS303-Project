@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       return { success: false, msg: 'Enter a valid email address' };
     }
     try {
-      const res = await axios.post('http://192.168.1.4:5000/api/auth/register', {
+      const res = await axios.post('http://192.168.1.8:5000/api/auth/register', {
         username,
         email,
         password,
