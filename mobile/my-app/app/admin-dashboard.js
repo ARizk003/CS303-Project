@@ -1,7 +1,6 @@
 import React, { useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
-import Navbar from '../components/Navbar';
 
 export default function AdminDashboard() {
   const { user } = useContext(AuthContext);
@@ -9,7 +8,6 @@ export default function AdminDashboard() {
   if (user?.role !== 'admin') {
     return (
       <View style={styles.container}>
-        <Navbar />
         <View style={styles.content}>
           <Text style={styles.error}>Access Denied</Text>
           <Text style={styles.errorText}>You don't have admin privileges</Text>
@@ -20,7 +18,6 @@ export default function AdminDashboard() {
 
   return (
     <View style={styles.container}>
-      <Navbar />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Admin Dashboard</Text>
         <Text style={styles.welcome}>Welcome, Admin {user?.username}!</Text>

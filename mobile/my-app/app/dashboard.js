@@ -1,14 +1,12 @@
 import React, { useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
-import Navbar from '../components/Navbar';
 
 export default function Dashboard() {
   const { user } = useContext(AuthContext);
 
   return (
     <View style={styles.container}>
-      <Navbar />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Dashboard</Text>
         <Text style={styles.welcome}>Welcome, {user?.username || 'User'}!</Text>
