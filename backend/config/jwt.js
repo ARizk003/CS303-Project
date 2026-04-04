@@ -1,10 +1,7 @@
 module.exports = {
   jwtSecret: process.env.JWT_SECRET || 'supersecretjwtkey',
-  jwtExpiration: '1h',
+  jwtExpiration: process.env.JWT_EXPIRATION || '7d',
 };
-module.exports = {
-  jwtSecret: process.env.JWT_SECRET || 'supersecretjwtkey',
-  jwtExpiration: '1h',
-};
+
 
 
