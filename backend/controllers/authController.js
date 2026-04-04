@@ -4,7 +4,13 @@ const nodemailer = require("nodemailer");
 const User = require("../models/User");
 const { jwtSecret, jwtExpiration } = require("../config/jwt");
 
+<<<<<<< HEAD
 const otpStore = {}; 
+=======
+
+
+const otpStore = {};
+>>>>>>> df07846d554141f43841149cc0b071663c112f62
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -14,6 +20,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+<<<<<<< HEAD
+=======
+
+
+
+
+>>>>>>> df07846d554141f43841149cc0b071663c112f62
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
   try {
@@ -41,6 +54,10 @@ exports.sendOtp = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> df07846d554141f43841149cc0b071663c112f62
 exports.verifyOtp = (req, res) => {
   const { email, otp } = req.body;
   const record = otpStore[email];
@@ -66,8 +83,10 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ msg: "User already exists" });
     }
 
-    let role = email === "admin@admin.com" ? "admin" : "student";
-
+    let role = email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()
+    ? "admin"
+    : "student";
+    
     user = new User({
       username,
       email,
@@ -167,6 +186,11 @@ exports.updateUserRole = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
+    }
+
+
+    if (user.role === "admin") {
+      return res.status(403).json({ msg: "Cannot change the role of another admin" });
     }
 
     if (!["admin", "student"].includes(role)) {
