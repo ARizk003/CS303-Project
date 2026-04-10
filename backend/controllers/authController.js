@@ -1,10 +1,8 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
-const User = require("../models/User");
+const bcrypt      = require("bcryptjs");
+const jwt         = require("jsonwebtoken");
+const nodemailer  = require("nodemailer");
+const User        = require("../models/User");
 const { jwtSecret, jwtExpiration } = require("../config/jwt");
-
-
 
 const otpStore = {};
 
@@ -12,13 +10,9 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+    pass: process.env.EMAIL_PASS
+  }
 });
-
-
-
-
 
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
@@ -35,7 +29,7 @@ exports.sendOtp = async (req, res) => {
           <h2>LearnNova Verification</h2>
           <p>Your OTP code is:</p>
           <h1 style="color:#4CAF50;">${otp}</h1>
-          <p> This code is valid for 10 minutes.</p>
+          <p>This code is valid for 10 minutes.</p>
         </div>
       `
     });
@@ -51,12 +45,16 @@ exports.verifyOtp = (req, res) => {
   const { email, otp } = req.body;
   const record = otpStore[email];
 
-  if (!record) return res.status(400).json({ msg: "OTP not found. Request a new one." });
+  if (!record) {
+    return res.status(400).json({ msg: "OTP not found. Request a new one." });
+  }
   if (Date.now() > record.expiresAt) {
     delete otpStore[email];
     return res.status(400).json({ msg: "OTP expired." });
   }
-  if (record.otp !== otp) return res.status(400).json({ msg: "Invalid OTP." });
+  if (record.otp !== otp) {
+    return res.status(400).json({ msg: "Invalid OTP." });
+  }
 
   delete otpStore[email];
   res.json({ msg: "Email verified successfully." });
@@ -64,178 +62,108 @@ exports.verifyOtp = (req, res) => {
 
 exports.registerUser = async (req, res) => {
   const { username, email, password } = req.body;
-
   try {
-
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ msg: "User already exists" });
     }
 
-    let role = email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()
-    ? "admin"
-    : "student";
-    
-    user = new User({
-      username,
-      email,
-      password,
-      role
-    });
+    const role =
+      email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()
+        ? "admin"
+        : "student";
+
+    user = new User({ username, email, password, role });
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
-
     await user.save();
 
-    const payload = {
-      user: {
-        id: user.id,
-        role: user.role
-      }
-    };
-
-    const token = jwt.sign(payload, jwtSecret, {
-      expiresIn: jwtExpiration
-    });
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-
+    const token = signToken(user);
+    res.json({ token, user: safeUser(user) });
   } catch (err) {
-
     console.error(err.message);
     res.status(500).send("Server error");
-
   }
 };
 
 exports.loginUser = async (req, res) => {
-
   const { email, password } = req.body;
-
   try {
-
-    let user = await User.findOne({ email });
-
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ msg: "Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(400).json({ msg: "Invalid credentials" });
     }
 
-    const payload = {
-      user: {
-        id: user.id,
-        role: user.role
-      }
-    };
-
-    const token = jwt.sign(payload, jwtSecret, {
-      expiresIn: jwtExpiration
-    });
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-
+    const token = signToken(user);
+    res.json({ token, user: safeUser(user) });
   } catch (err) {
-
     console.error(err.message);
     res.status(500).send("Server error");
-
   }
+};
 
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
 };
 
 exports.updateUserRole = async (req, res) => {
-
   const { userId, role } = req.body;
-
   try {
-
     const user = await User.findById(userId);
-
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
-
-
     if (user.role === "admin") {
       return res.status(403).json({ msg: "Cannot change the role of another admin" });
     }
-
     if (!["admin", "student"].includes(role)) {
       return res.status(400).json({ msg: "Invalid role" });
     }
 
     user.role = role;
-
     await user.save();
-
-    res.json({
-      msg: "User role updated successfully",
-      user
-    });
-
+    res.json({ msg: "User role updated successfully", user });
   } catch (err) {
-
     console.error(err.message);
     res.status(500).send("Server error");
-
   }
-
 };
 
 exports.getAllUsers = async (req, res) => {
-
   try {
-
     const users = await User.find().select("-password");
-
     res.json(users);
-
   } catch (err) {
-
     console.error(err.message);
     res.status(500).send("Server error");
-
   }
-
 };
 
-exports.getMe = async (req, res) => {
+function signToken(user) {
+  return jwt.sign(
+    { user: { id: user.id, role: user.role } },
+    jwtSecret,
+    { expiresIn: jwtExpiration }
+  );
+}
 
-  try {
-
-    const user = await User
-      .findById(req.user.id)
-      .select("-password");
-
-    res.json(user);
-
-  } catch (err) {
-
-    console.error(err.message);
-    res.status(500).send("Server error");
-
-  }
-
-};
+function safeUser(user) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    role: user.role
+  };
+}
