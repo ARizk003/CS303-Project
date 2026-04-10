@@ -15,7 +15,6 @@ exports.createTag = async (req, res) => {
 
     res.status(201).json(tag);
   } catch (err) {
-    // Duplicate key
     if (err.code === 11000) {
       return res.status(409).json({ msg: "Tag already exists" });
     }
