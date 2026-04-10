@@ -21,10 +21,18 @@ const BookSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
-  favorites: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
-  }],
+  favorites: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }
+  ],
+  tags: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tag"
+    }
+  ],
   date: {
     type: Date,
     default: Date.now

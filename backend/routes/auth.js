@@ -1,17 +1,36 @@
-const express = require("express");
-const router = express.Router();
-const authController = require("../controllers/authController");
-const auth = require("../middleware/auth");
-const { adminOnly } = require("../middleware/auth");
+const jwt = require("jsonwebtoken");
+const { jwtSecret } = require("../config/jwt");
 
-router.post("/send-otp", authController.sendOtp);
-router.post("/verify-otp", authController.verifyOtp);
+const auth = (req, res, next) => {
+  const token = req.header("x-auth-token");
 
-router.post("/register", authController.registerUser);
-router.post("/login", authController.loginUser);
+  if (!token) {
+    return res.status(401).json({ msg: "No token, authorization denied" });
+  }
 
-router.get("/me", auth, authController.getMe);
-router.put("/update-role", auth, authController.updateUserRole);
-router.get("/users", auth, authController.getAllUsers);
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    req.user = decoded.user;
+    next();
+  } catch (err) {
+    res.status(401).json({ msg: "Token is not valid" });
+  }
+};
 
-module.exports = router;
+const adminOnly = (req, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ msg: "Access denied. Admin only." });
+  }
+  next();
+};
+
+const studentOnly = (req, res, next) => {
+  if (req.user.role !== "student") {
+    return res.status(403).json({ msg: "Access denied. Students only." });
+  }
+  next();
+};
+
+module.exports = auth;
+module.exports.adminOnly = adminOnly;
+module.exports.studentOnly = studentOnly;
