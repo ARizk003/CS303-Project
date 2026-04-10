@@ -7,31 +7,37 @@ const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('users');
     const [users, setUsers] = useState([]);
     const [books, setBooks] = useState([]);
+    const [allTags, setAllTags] = useState([]);
+    const [newTagName, setNewTagName] = useState('');
     const [loading, setLoading] = useState(false);
     const [showAddBookModal, setShowAddBookModal] = useState(false);
     const [showEditBookModal, setShowEditBookModal] = useState(false);
     const [selectedBook, setSelectedBook] = useState(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    
+
     const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const [newBook, setNewBook] = useState({
-        title: '',
-        author: '',
-        category: '',
-        pdfUrl: ''
+        title: '', author: '', category: '', pdfUrl: '', selectedTagIds: []
     });
 
     const token = localStorage.getItem('token');
 
     useEffect(() => {
-        if (activeTab === 'users') {
-            fetchUsers();
-        } else if (activeTab === 'books') {
-            fetchBooks();
-        }
+        fetchAllTags();
+        if (activeTab === 'users') fetchUsers();
+        else if (activeTab === 'books') fetchBooks();
     }, [activeTab]);
+
+    const fetchAllTags = async () => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/tags');
+            setAllTags(res.data);
+        } catch (err) {
+            console.error('Failed to fetch tags', err);
+        }
+    };
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -59,30 +65,77 @@ const AdminDashboard = () => {
         setLoading(false);
     };
 
-    const deleteUser = async (userId) => {
-        if (!window.confirm('Are you sure you want to delete this user?')) return;
-        
+    // إنشاء تاج جديد عبر POST /api/tags
+    const handleCreateTag = async (e) => {
+        e.preventDefault();
+        if (!newTagName.trim()) return;
         try {
-            await axios.delete(`http://localhost:5000/api/users/${userId}`, {
+            await axios.post('http://localhost:5000/api/tags',
+                { name: newTagName.trim() },
+                { headers: { 'x-auth-token': token } }
+            );
+            setNewTagName('');
+            fetchAllTags();
+        } catch (err) {
+            if (err.response?.status === 409) {
+                alert('Tag already exists');
+            } else {
+                alert('Failed to create tag');
+            }
+        }
+    };
+
+    // حذف تاج
+    const handleDeleteTag = async (tagId) => {
+        if (!window.confirm('Delete this tag?')) return;
+        try {
+            await axios.delete(`http://localhost:5000/api/tags/${tagId}`, {
                 headers: { 'x-auth-token': token }
             });
-            alert('User deleted successfully');
-            fetchUsers();
+            fetchAllTags();
         } catch (err) {
-            console.error(err);
-            alert('Failed to delete user');
+            alert('Failed to delete tag');
         }
+    };
+
+    const toggleTagAdd = (tagId) => {
+        setNewBook(prev => ({
+            ...prev,
+            selectedTagIds: prev.selectedTagIds.includes(tagId)
+                ? prev.selectedTagIds.filter(id => id !== tagId)
+                : [...prev.selectedTagIds, tagId]
+        }));
+    };
+
+    const toggleTagEdit = (tagId) => {
+        setSelectedBook(prev => ({
+            ...prev,
+            selectedTagIds: prev.selectedTagIds.includes(tagId)
+                ? prev.selectedTagIds.filter(id => id !== tagId)
+                : [...prev.selectedTagIds, tagId]
+        }));
     };
 
     const handleAddBook = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/books', newBook, {
-                headers: { 'x-auth-token': token }
-            });
+            const res = await axios.post('http://localhost:5000/api/books',
+                { title: newBook.title, author: newBook.author, category: newBook.category, pdfUrl: newBook.pdfUrl },
+                { headers: { 'x-auth-token': token } }
+            );
+            const newBookId = res.data._id;
+
+            if (newBook.selectedTagIds.length > 0) {
+                await axios.put(
+                    `http://localhost:5000/api/books/${newBookId}/tags`,
+                    { tag_ids: newBook.selectedTagIds },
+                    { headers: { 'x-auth-token': token } }
+                );
+            }
+
             alert('Book added successfully');
             setShowAddBookModal(false);
-            setNewBook({ title: '', author: '', category: '', pdfUrl: '' });
+            setNewBook({ title: '', author: '', category: '', pdfUrl: '', selectedTagIds: [] });
             fetchBooks();
         } catch (err) {
             console.error(err);
@@ -93,9 +146,17 @@ const AdminDashboard = () => {
     const handleEditBook = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:5000/api/books/${selectedBook._id}`, selectedBook, {
-                headers: { 'x-auth-token': token }
-            });
+            await axios.put(`http://localhost:5000/api/books/${selectedBook._id}`,
+                { title: selectedBook.title, author: selectedBook.author, category: selectedBook.category, pdfUrl: selectedBook.pdfUrl },
+                { headers: { 'x-auth-token': token } }
+            );
+
+            await axios.post(
+                `http://localhost:5000/api/books/${selectedBook._id}/tags`,
+                { tag_ids: selectedBook.selectedTagIds },
+                { headers: { 'x-auth-token': token } }
+            );
+
             alert('Book updated successfully');
             setShowEditBookModal(false);
             setSelectedBook(null);
@@ -106,23 +167,35 @@ const AdminDashboard = () => {
         }
     };
 
+    const deleteUser = async (userId) => {
+        if (!window.confirm('Are you sure you want to delete this user?')) return;
+        try {
+            await axios.delete(`http://localhost:5000/api/users/${userId}`, {
+                headers: { 'x-auth-token': token }
+            });
+            fetchUsers();
+        } catch (err) {
+            alert('Failed to delete user');
+        }
+    };
+
     const deleteBook = async (bookId) => {
         if (!window.confirm('Are you sure you want to delete this book?')) return;
-        
         try {
             await axios.delete(`http://localhost:5000/api/books/${bookId}`, {
                 headers: { 'x-auth-token': token }
             });
-            alert('Book deleted successfully');
             fetchBooks();
         } catch (err) {
-            console.error(err);
             alert('Failed to delete book');
         }
     };
 
     const openEditModal = (book) => {
-        setSelectedBook({ ...book });
+        const existingTagIds = Array.isArray(book.tags)
+            ? book.tags.map(tag => typeof tag === 'object' ? tag._id : tag)
+            : [];
+        setSelectedBook({ ...book, selectedTagIds: existingTagIds });
         setShowEditBookModal(true);
     };
 
@@ -133,54 +206,48 @@ const AdminDashboard = () => {
 
     return (
         <div className="d-flex" style={{ minHeight: 'calc(100vh - 76px)', backgroundColor: '#f8f9fa' }}>
-            <div 
-                className="bg-white border-end shadow-sm" 
-                style={{ 
-                    width: sidebarCollapsed ? '80px' : '250px',
-                    transition: 'width 0.3s ease',
-                    position: 'relative'
-                }}
-            >
+
+            {/* Sidebar */}
+            <div className="bg-white border-end shadow-sm"
+                style={{ width: sidebarCollapsed ? '80px' : '250px', transition: 'width 0.3s ease' }}>
                 <div className="p-3 border-bottom" style={{ backgroundColor: '#002147' }}>
                     <div className="d-flex justify-content-between align-items-center">
-                        {!sidebarCollapsed && (
-                            <h5 className="text-white mb-0 fw-bold">Admin Panel</h5>
-                        )}
-                        <button 
-                            className="btn btn-sm text-white ms-auto"
-                            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                            style={{ backgroundColor: '#C5A059' }}
-                        >
+                        {!sidebarCollapsed && <h5 className="text-white mb-0 fw-bold">Admin Panel</h5>}
+                        <button className="btn btn-sm text-white ms-auto" onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                            style={{ backgroundColor: '#C5A059' }}>
                             {sidebarCollapsed ? '☰' : '✕'}
                         </button>
                     </div>
                 </div>
-                
+
                 <div className="d-flex flex-column p-2">
-                    <button 
+                    <button
                         className={`btn text-start mb-2 d-flex align-items-center ${activeTab === 'users' ? 'btn-primary' : 'btn-outline-secondary'}`}
                         onClick={() => setActiveTab('users')}
-                        style={activeTab === 'users' ? { backgroundColor: '#002147', borderColor: '#002147' } : {}}
-                    >
+                        style={activeTab === 'users' ? { backgroundColor: '#002147', borderColor: '#002147' } : {}}>
                         <span className="fs-5 me-2">👥</span>
                         {!sidebarCollapsed && <span>User Management</span>}
                     </button>
-                    
-                    <button 
+
+                    <button
                         className={`btn text-start mb-2 d-flex align-items-center ${activeTab === 'books' ? 'btn-primary' : 'btn-outline-secondary'}`}
                         onClick={() => setActiveTab('books')}
-                        style={activeTab === 'books' ? { backgroundColor: '#002147', borderColor: '#002147' } : {}}
-                    >
+                        style={activeTab === 'books' ? { backgroundColor: '#002147', borderColor: '#002147' } : {}}>
                         <span className="fs-5 me-2">📚</span>
                         {!sidebarCollapsed && <span>Books Management</span>}
                     </button>
-                    
+
+                    <button
+                        className={`btn text-start mb-2 d-flex align-items-center ${activeTab === 'tags' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                        onClick={() => setActiveTab('tags')}
+                        style={activeTab === 'tags' ? { backgroundColor: '#002147', borderColor: '#002147' } : {}}>
+                        <span className="fs-5 me-2">🏷️</span>
+                        {!sidebarCollapsed && <span>Tags Management</span>}
+                    </button>
+
                     <hr />
-                    
-                    <button 
-                        className="btn btn-outline-danger text-start d-flex align-items-center"
-                        onClick={handleLogout}
-                    >
+
+                    <button className="btn btn-outline-danger text-start d-flex align-items-center" onClick={handleLogout}>
                         <span className="fs-5 me-2">🚪</span>
                         {!sidebarCollapsed && <span>Logout</span>}
                     </button>
@@ -189,6 +256,8 @@ const AdminDashboard = () => {
 
             {/* Main Content */}
             <div className="flex-grow-1 p-4">
+
+                {/* Users Tab */}
                 {activeTab === 'users' && (
                     <div className="bg-white rounded shadow-sm p-4">
                         <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
@@ -196,20 +265,14 @@ const AdminDashboard = () => {
                         </div>
                         {loading ? (
                             <div className="text-center py-5">
-                                <div className="spinner-border" style={{ color: '#002147' }} role="status">
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
+                                <div className="spinner-border" style={{ color: '#002147' }} role="status" />
                             </div>
                         ) : (
                             <div className="table-responsive">
                                 <table className="table table-hover">
                                     <thead style={{ backgroundColor: '#002147', color: 'white' }}>
                                         <tr>
-                                            <th>Username</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                            <th>Date Joined</th>
-                                            <th>Actions</th>
+                                            <th>Username</th><th>Email</th><th>Role</th><th>Date Joined</th><th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -224,12 +287,7 @@ const AdminDashboard = () => {
                                                 </td>
                                                 <td>{new Date(user.date).toLocaleDateString()}</td>
                                                 <td>
-                                                    <button 
-                                                        className="btn btn-danger btn-sm"
-                                                        onClick={() => deleteUser(user._id)}
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    <button className="btn btn-danger btn-sm" onClick={() => deleteUser(user._id)}>Delete</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -240,34 +298,26 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
+                {/* Books Tab */}
                 {activeTab === 'books' && (
                     <div className="bg-white rounded shadow-sm p-4">
                         <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                             <h2 className="mb-0" style={{ color: '#002147' }}>Books Management</h2>
-                            <button 
-                                className="btn text-white"
-                                style={{ backgroundColor: '#C5A059' }}
-                                onClick={() => setShowAddBookModal(true)}
-                            >
+                            <button className="btn text-white" style={{ backgroundColor: '#C5A059' }}
+                                onClick={() => setShowAddBookModal(true)}>
                                 + Add New Book
                             </button>
                         </div>
                         {loading ? (
                             <div className="text-center py-5">
-                                <div className="spinner-border" style={{ color: '#002147' }} role="status">
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
+                                <div className="spinner-border" style={{ color: '#002147' }} role="status" />
                             </div>
                         ) : (
                             <div className="table-responsive">
                                 <table className="table table-hover">
                                     <thead style={{ backgroundColor: '#002147', color: 'white' }}>
                                         <tr>
-                                            <th>Title</th>
-                                            <th>Author</th>
-                                            <th>Category</th>
-                                            <th>PDF URL</th>
-                                            <th>Actions</th>
+                                            <th>Title</th><th>Author</th><th>Category</th><th>Tags</th><th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -277,24 +327,19 @@ const AdminDashboard = () => {
                                                 <td>{book.author}</td>
                                                 <td>{book.category}</td>
                                                 <td>
-                                                    <a href={book.pdfUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#C5A059' }}>
-                                                        View PDF
-                                                    </a>
+                                                    {Array.isArray(book.tags) && book.tags.map((tag, i) => (
+                                                        <span key={tag._id || i} className="badge bg-light text-dark border me-1">
+                                                            {typeof tag === 'object' ? tag.name : tag}
+                                                        </span>
+                                                    ))}
                                                 </td>
                                                 <td>
-                                                    <button 
-                                                        className="btn btn-sm me-2"
-                                                        style={{ backgroundColor: '#C5A059', color: 'white' }}
-                                                        onClick={() => openEditModal(book)}
-                                                    >
+                                                    <button className="btn btn-sm me-2 text-white"
+                                                        style={{ backgroundColor: '#C5A059' }}
+                                                        onClick={() => openEditModal(book)}>
                                                         Edit
                                                     </button>
-                                                    <button 
-                                                        className="btn btn-danger btn-sm"
-                                                        onClick={() => deleteBook(book._id)}
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    <button className="btn btn-danger btn-sm" onClick={() => deleteBook(book._id)}>Delete</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -302,6 +347,49 @@ const AdminDashboard = () => {
                                 </table>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Tags Tab */}
+                {activeTab === 'tags' && (
+                    <div className="bg-white rounded shadow-sm p-4">
+                        <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                            <h2 className="mb-0" style={{ color: '#002147' }}>Tags Management</h2>
+                        </div>
+
+                        {/* إنشاء تاج جديد */}
+                        <form onSubmit={handleCreateTag} className="d-flex gap-2 mb-4">
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="New tag name..."
+                                value={newTagName}
+                                onChange={(e) => setNewTagName(e.target.value)}
+                                style={{ maxWidth: '300px' }}
+                            />
+                            <button type="submit" className="btn text-white" style={{ backgroundColor: '#C5A059' }}>
+                                + Add Tag
+                            </button>
+                        </form>
+
+                        {/* قائمة التاجز */}
+                        <div className="d-flex flex-wrap gap-2">
+                            {allTags.length === 0 ? (
+                                <p className="text-muted">No tags yet.</p>
+                            ) : (
+                                allTags.map(tag => (
+                                    <span key={tag._id} className="badge d-flex align-items-center gap-2 px-3 py-2 fs-6"
+                                        style={{ backgroundColor: '#f8f9fa', color: '#002147', border: '1px solid #dee2e6' }}>
+                                        🏷️ {tag.name}
+                                        <button
+                                            className="btn-close btn-close-sm"
+                                            style={{ fontSize: '0.6rem' }}
+                                            onClick={() => handleDeleteTag(tag._id)}
+                                        />
+                                    </span>
+                                ))
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
@@ -319,43 +407,43 @@ const AdminDashboard = () => {
                                 <form onSubmit={handleAddBook}>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">Title</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control"
-                                            value={newBook.title}
-                                            onChange={(e) => setNewBook({...newBook, title: e.target.value})}
-                                            required 
-                                        />
+                                        <input type="text" className="form-control" value={newBook.title}
+                                            onChange={(e) => setNewBook({ ...newBook, title: e.target.value })} required />
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">Author</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control"
-                                            value={newBook.author}
-                                            onChange={(e) => setNewBook({...newBook, author: e.target.value})}
-                                            required 
-                                        />
+                                        <input type="text" className="form-control" value={newBook.author}
+                                            onChange={(e) => setNewBook({ ...newBook, author: e.target.value })} required />
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">Category</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control"
-                                            value={newBook.category}
-                                            onChange={(e) => setNewBook({...newBook, category: e.target.value})}
-                                            required 
-                                        />
+                                        <input type="text" className="form-control" value={newBook.category}
+                                            onChange={(e) => setNewBook({ ...newBook, category: e.target.value })} required />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label fw-bold">Tags</label>
+                                        {allTags.length === 0 ? (
+                                            <p className="text-muted small">No tags available. Add tags from Tags Management first.</p>
+                                        ) : (
+                                            <div className="d-flex flex-wrap gap-2 p-2 border rounded" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                                                {allTags.map(tag => (
+                                                    <div key={tag._id} className="form-check">
+                                                        <input className="form-check-input" type="checkbox"
+                                                            id={`add-tag-${tag._id}`}
+                                                            checked={newBook.selectedTagIds.includes(tag._id)}
+                                                            onChange={() => toggleTagAdd(tag._id)} />
+                                                        <label className="form-check-label" htmlFor={`add-tag-${tag._id}`}>
+                                                            {tag.name}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">PDF URL</label>
-                                        <input 
-                                            type="url" 
-                                            className="form-control"
-                                            value={newBook.pdfUrl}
-                                            onChange={(e) => setNewBook({...newBook, pdfUrl: e.target.value})}
-                                            required 
-                                        />
+                                        <input type="url" className="form-control" value={newBook.pdfUrl}
+                                            onChange={(e) => setNewBook({ ...newBook, pdfUrl: e.target.value })} required />
                                     </div>
                                     <button type="submit" className="btn text-white w-100" style={{ backgroundColor: '#C5A059' }}>
                                         Add Book
@@ -380,43 +468,43 @@ const AdminDashboard = () => {
                                 <form onSubmit={handleEditBook}>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">Title</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control"
-                                            value={selectedBook.title}
-                                            onChange={(e) => setSelectedBook({...selectedBook, title: e.target.value})}
-                                            required 
-                                        />
+                                        <input type="text" className="form-control" value={selectedBook.title}
+                                            onChange={(e) => setSelectedBook({ ...selectedBook, title: e.target.value })} required />
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">Author</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control"
-                                            value={selectedBook.author}
-                                            onChange={(e) => setSelectedBook({...selectedBook, author: e.target.value})}
-                                            required 
-                                        />
+                                        <input type="text" className="form-control" value={selectedBook.author}
+                                            onChange={(e) => setSelectedBook({ ...selectedBook, author: e.target.value })} required />
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">Category</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control"
-                                            value={selectedBook.category}
-                                            onChange={(e) => setSelectedBook({...selectedBook, category: e.target.value})}
-                                            required 
-                                        />
+                                        <input type="text" className="form-control" value={selectedBook.category}
+                                            onChange={(e) => setSelectedBook({ ...selectedBook, category: e.target.value })} required />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label fw-bold">Tags</label>
+                                        {allTags.length === 0 ? (
+                                            <p className="text-muted small">No tags available.</p>
+                                        ) : (
+                                            <div className="d-flex flex-wrap gap-2 p-2 border rounded" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                                                {allTags.map(tag => (
+                                                    <div key={tag._id} className="form-check">
+                                                        <input className="form-check-input" type="checkbox"
+                                                            id={`edit-tag-${tag._id}`}
+                                                            checked={selectedBook.selectedTagIds.includes(tag._id)}
+                                                            onChange={() => toggleTagEdit(tag._id)} />
+                                                        <label className="form-check-label" htmlFor={`edit-tag-${tag._id}`}>
+                                                            {tag.name}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">PDF URL</label>
-                                        <input 
-                                            type="url" 
-                                            className="form-control"
-                                            value={selectedBook.pdfUrl}
-                                            onChange={(e) => setSelectedBook({...selectedBook, pdfUrl: e.target.value})}
-                                            required 
-                                        />
+                                        <input type="url" className="form-control" value={selectedBook.pdfUrl}
+                                            onChange={(e) => setSelectedBook({ ...selectedBook, pdfUrl: e.target.value })} required />
                                     </div>
                                     <button type="submit" className="btn text-white w-100" style={{ backgroundColor: '#C5A059' }}>
                                         Update Book
