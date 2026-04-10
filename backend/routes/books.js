@@ -3,6 +3,8 @@ const router             = express.Router();
 const auth               = require("../middleware/auth");
 const { adminOnly }      = require("../middleware/auth");
 const booksController    = require("../controllers/booksController");
+
+
 const tagsController     = require("../controllers/tagsController");
 const ratingsController  = require("../controllers/ratingsController");
 
@@ -20,12 +22,16 @@ function optionalAuth(req, res, next) {
   next();
 }
 
-router.get("/",       booksController.getAllBooks);
-router.post("/",      auth, adminOnly, booksController.addBook);
-router.put("/:id",    auth, adminOnly, booksController.updateBook);
-router.delete("/:id", auth, adminOnly, booksController.deleteBook);
+router.get("/", booksController.getAllBooks);
 
 router.post("/favorite", auth, booksController.addToFavorite);
+
+router.post("/", auth, adminOnly, booksController.addBook);
+
+router.put("/:id", auth, adminOnly, booksController.updateBook);
+
+router.delete("/:id", auth, adminOnly, booksController.deleteBook);
+
 
 router.post("/:id/tags", auth, adminOnly, tagsController.assignTagsToBook);
 router.get("/:id/tags",  tagsController.getBookTags);
