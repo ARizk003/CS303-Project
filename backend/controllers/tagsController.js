@@ -1,7 +1,6 @@
 const Tag  = require("../models/Tag");
 const Book = require("../models/Book");
 
-
 exports.createTag = async (req, res) => {
   try {
     const { name } = req.body;
@@ -23,7 +22,6 @@ exports.createTag = async (req, res) => {
   }
 };
 
-
 exports.getAllTags = async (req, res) => {
   try {
     const tags = await Tag.find().sort({ name: 1 });
@@ -33,7 +31,6 @@ exports.getAllTags = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-
 
 exports.assignTagsToBook = async (req, res) => {
   try {
@@ -64,7 +61,6 @@ exports.assignTagsToBook = async (req, res) => {
   }
 };
 
-
 exports.getBookTags = async (req, res) => {
   try {
     const book = await Book.findById(req.params.id).populate("tags", "name");
@@ -73,6 +69,51 @@ exports.getBookTags = async (req, res) => {
     }
 
     res.json(book.tags);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+exports.updateTag = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ msg: "Tag name is required" });
+    }
+
+    const tag = await Tag.findById(req.params.id);
+    if (!tag) {
+      return res.status(404).json({ msg: "Tag not found" });
+    }
+
+    tag.name = name.trim().toLowerCase();
+    await tag.save();
+
+    res.json({ msg: "Tag updated successfully", tag });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ msg: "Tag name already exists" });
+    }
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+exports.deleteTag = async (req, res) => {
+  try {
+    const tag = await Tag.findById(req.params.id);
+    if (!tag) {
+      return res.status(404).json({ msg: "Tag not found" });
+    }
+ await Book.updateMany(
+      { tags: req.params.id },
+      { $pull: { tags: tag._id } }
+    );
+   await tag.deleteOne();
+
+    res.json({ msg: "Tag deleted successfully and removed from all associated books" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
