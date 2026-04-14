@@ -21,12 +21,13 @@ const BookSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
+  // *discuss favourites later*
   favorites: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
     }
-  ],
+  ], // *discuss book_tag representation later*
   tags: [
     {
       type: mongoose.Schema.Types.ObjectId,

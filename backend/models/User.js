@@ -30,10 +30,7 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  lists: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'List'
-  }]
+  // no need for List foreign key after adding userId in List, else there would be redundancy
 });
 
 module.exports = mongoose.model("User", UserSchema);
