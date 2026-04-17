@@ -3,10 +3,10 @@ const router             = express.Router();
 const auth               = require("../middleware/auth");
 const { adminOnly }      = require("../middleware/auth");
 const booksController    = require("../controllers/booksController");
-
-
 const tagsController     = require("../controllers/tagsController");
 const ratingsController  = require("../controllers/ratingsController");
+
+const { upload, handleUploadError } = require("../middleware/upload");
 
 function optionalAuth(req, res, next) {
   const token = req.header("x-auth-token");
@@ -17,21 +17,32 @@ function optionalAuth(req, res, next) {
     const decoded       = jwt.verify(token, jwtSecret);
     req.user            = decoded.user;
   } catch {
-   
   }
   next();
 }
 
+router.get("/search", booksController.searchBooks);
+
 router.get("/", booksController.getAllBooks);
 
-router.post("/favorite", auth, booksController.addToFavorite);
+router.get("/:id", booksController.getBookById);
 
-router.post("/", auth, adminOnly, booksController.addBook);
+router.get("/:id/view", auth, booksController.viewBook);
+
+router.post(
+  "/",
+  auth,
+  adminOnly,
+  upload.single("pdf"),       
+  handleUploadError,         
+  booksController.addBook
+);
+
+router.post("/favorite", auth, booksController.addToFavorite);
 
 router.put("/:id", auth, adminOnly, booksController.updateBook);
 
 router.delete("/:id", auth, adminOnly, booksController.deleteBook);
-
 
 router.post("/:id/tags", auth, adminOnly, tagsController.assignTagsToBook);
 router.get("/:id/tags",  tagsController.getBookTags);
