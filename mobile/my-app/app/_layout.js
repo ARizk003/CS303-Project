@@ -63,7 +63,6 @@ export default function Layout() {
           <Tabs.Screen name="admin-dashboard" options={{ href: null }} />
         </Tabs>
 
-        {/* Floating chatbot button — sits above all screens */}
         <ChatbotButton />
       </View>
     </AuthProvider>

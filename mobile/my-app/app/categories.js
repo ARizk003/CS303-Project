@@ -8,14 +8,12 @@ import { AuthContext } from '../context/AuthContext';
 
 const BASE_URL = 'http://192.168.1.8:5000';
 
-// ── Star Rating Component ─────────────────────────────────────────────────────
 function StarRating({ bookId, initialRating, initialAvg, initialCount, token, onRated }) {
   const [userRating, setUserRating]   = useState(initialRating);
   const [avgRating, setAvgRating]     = useState(initialAvg);
   const [ratingCount, setRatingCount] = useState(initialCount);
   const [submitting, setSubmitting]   = useState(false);
 
-  // sync if parent re-fetches ratings (e.g. after auth loads)
   useEffect(() => { setUserRating(initialRating); }, [initialRating]);
   useEffect(() => { setAvgRating(initialAvg); },    [initialAvg]);
   useEffect(() => { setRatingCount(initialCount); }, [initialCount]);
@@ -36,7 +34,6 @@ function StarRating({ bookId, initialRating, initialAvg, initialCount, token, on
       setUserRating(res.data.your_rating);
       setAvgRating(res.data.average_rating);
       setRatingCount(res.data.ratings_count);
-      // persist into parent so re-renders don't reset stars
       onRated?.(bookId, {
         user_rating: res.data.your_rating,
         average_rating: res.data.average_rating,
@@ -67,7 +64,6 @@ function StarRating({ bookId, initialRating, initialAvg, initialCount, token, on
   );
 }
 
-// ── Tag Chips ─────────────────────────────────────────────────────────────────
 function TagChips({ tags }) {
   if (!tags || tags.length === 0) return null;
   return (
@@ -81,7 +77,6 @@ function TagChips({ tags }) {
   );
 }
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
 export default function Categories() {
   const { user } = useContext(AuthContext);
   const [books, setBooks]                   = useState([]);
@@ -93,7 +88,6 @@ export default function Categories() {
     setRatings(prev => ({ ...prev, [bookId]: data }));
   }, []);
 
-  // fetch books once, then re-fetch ratings whenever user auth state changes
   useEffect(() => {
     fetchBooks();
   }, []);
@@ -145,7 +139,6 @@ export default function Categories() {
     );
   }
 
-  // ── Category Grid ──
   if (!selectedCategory) {
     return (
       <View style={styles.container}>
@@ -178,7 +171,6 @@ export default function Categories() {
     );
   }
 
-  // ── Book List ──
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => setSelectedCategory(null)}>
@@ -193,16 +185,13 @@ export default function Categories() {
           const r = ratings[item._id] || { average_rating: 0, ratings_count: 0, user_rating: null };
           return (
             <View style={styles.bookCard}>
-              {/* Title + Author */}
               <View style={styles.bookHeader}>
                 <Text style={styles.bookTitle}>{item.title}</Text>
                 <Text style={styles.bookAuthor}>{item.author}</Text>
               </View>
 
-              {/* Tags */}
               <TagChips tags={item.tags} />
 
-              {/* Stars */}
               <StarRating
                 bookId={item._id}
                 initialRating={r.user_rating}
@@ -212,7 +201,6 @@ export default function Categories() {
                 onRated={handleRated}
               />
 
-              {/* Read button */}
               <TouchableOpacity
                 style={styles.readBtn}
                 onPress={() => Linking.openURL(item.pdfUrl)}
@@ -235,7 +223,6 @@ const styles = StyleSheet.create({
   list:       { paddingBottom: 20 },
   row:        { justifyContent: 'space-between' },
 
-  // Category cards
   categoryCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -257,7 +244,6 @@ const styles = StyleSheet.create({
   backBtn:  { marginBottom: 12 },
   backText: { color: '#C5A059', fontWeight: '700', fontSize: 15 },
 
-  // Book cards
   bookCard: {
     backgroundColor: '#fff',
     borderRadius: 14,
@@ -271,19 +257,16 @@ const styles = StyleSheet.create({
   bookTitle:   { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginBottom: 3 },
   bookAuthor:  { fontSize: 13, color: '#8e7f68' },
 
-  // Tags
   tagsRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
   tagChip:  { backgroundColor: '#f0e8d5', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
   tagText:  { fontSize: 11, color: '#C5A059', fontWeight: '700' },
 
-  // Stars
   ratingRow:  { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
   starsRow:   { flexDirection: 'row', gap: 2 },
   star:       { fontSize: 22, color: '#d4c4a8' },
   starFilled: { color: '#C5A059' },
   ratingMeta: { fontSize: 12, color: '#8e7f68', fontWeight: '600' },
 
-  // Read button
   readBtn: {
     backgroundColor: '#C5A059',
     paddingVertical: 9,

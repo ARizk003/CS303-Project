@@ -10,19 +10,16 @@ export default function ChatbotButton() {
 
   return (
     <>
-      {/* Floating button */}
       <TouchableOpacity style={styles.fab} onPress={() => setVisible(true)}>
         <Text style={styles.fabIcon}>💬</Text>
       </TouchableOpacity>
 
-      {/* Chat modal */}
       <Modal visible={visible} animationType="slide" transparent onRequestClose={() => setVisible(false)}>
         <TouchableWithoutFeedback onPress={() => setVisible(false)}>
           <View style={styles.overlay} />
         </TouchableWithoutFeedback>
 
         <SafeAreaView style={styles.sheet}>
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>LEARN<Text style={styles.headerOva}>OVA</Text> Assistant</Text>
             <TouchableOpacity onPress={() => setVisible(false)} style={styles.closeBtn}>
@@ -30,7 +27,6 @@ export default function ChatbotButton() {
             </TouchableOpacity>
           </View>
 
-          {/* Chatbase WebView */}
           <WebView
             source={{ uri: 'https://www.chatbase.co/chatbot-iframe/1z-0HVnhilJA-GBj4C31a' }}
             style={styles.webview}
