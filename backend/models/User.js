@@ -30,10 +30,32 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+
   lists: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'List'
-  }]
+  }],
+
+  resetOtp: {
+    type: String,
+    default: null
+  },
+
+  resetOtpExpire: {
+    type: Date,
+    default: null
+  },
+
+  otpAttempts: {
+    type: Number,
+    default: 0
+  },
+
+  lastOtpSentAt: {
+    type: Date,
+    default: null
+  }
+
 });
 
 module.exports = mongoose.model("User", UserSchema);
