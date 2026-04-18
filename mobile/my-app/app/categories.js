@@ -4,96 +4,10 @@ import {
   StyleSheet, ActivityIndicator, Linking, Alert, Modal,
 } from 'react-native';
 import axios from 'axios';
-import { WebView } from 'react-native-webview';
 import { AuthContext } from '../context/AuthContext';
+import PdfViewerModal from '../components/PdfViewerModal';
 
 const BASE_URL = 'http://192.168.1.8:5000';
-
-function PdfViewer({ url }) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(false);
-
-  const pdfJsHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fdfaf6; }
-    #viewer { width: 100vw; }
-    canvas { display: block; width: 100% !important; height: auto !important; margin-bottom: 8px; }
-    #error { color: #c0392b; text-align: center; padding: 40px 20px; font-family: sans-serif; }
-    #loading { color: #8e7f68; text-align: center; padding: 40px 20px; font-family: sans-serif; }
-  </style>
-</head>
-<body>
-  <div id="loading">Rendering PDF…</div>
-  <div id="viewer"></div>
-  <div id="error" style="display:none"></div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-    const url = ${JSON.stringify(url)};
-    const viewer = document.getElementById('viewer');
-    const loadingEl = document.getElementById('loading');
-    const errorEl = document.getElementById('error');
-
-    pdfjsLib.getDocument({ url, withCredentials: false }).promise
-      .then(pdf => {
-        loadingEl.style.display = 'none';
-        const renders = [];
-        for (let i = 1; i <= pdf.numPages; i++) {
-          renders.push(
-            pdf.getPage(i).then(page => {
-              const viewport = page.getViewport({ scale: window.innerWidth / page.getViewport({ scale: 1 }).width });
-              const canvas = document.createElement('canvas');
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-              viewer.appendChild(canvas);
-              return page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-            })
-          );
-        }
-        return renders.reduce((p, r) => p.then(() => r), Promise.resolve());
-      })
-      .catch(err => {
-        loadingEl.style.display = 'none';
-        errorEl.style.display = 'block';
-        errorEl.textContent = 'Failed to load PDF: ' + (err.message || err);
-      });
-  </script>
-</body>
-</html>`;
-
-  return (
-    <View style={{ flex: 1 }}>
-      <WebView
-        source={{ html: pdfJsHtml }}
-        style={{ flex: 1 }}
-        onLoadEnd={() => setLoading(false)}
-        onError={() => { setLoading(false); setError(true); }}
-        originWhitelist={['*']}
-        javaScriptEnabled={true}
-        mixedContentMode="always"
-      />
-      {loading && (
-        <View style={styles.pdfLoading}>
-          <ActivityIndicator size="large" color="#C5A059" />
-          <Text style={styles.pdfLoadingText}>Loading PDF…</Text>
-        </View>
-      )}
-      {error && (
-        <View style={styles.pdfError}>
-          <Text style={styles.pdfErrorText}>Failed to load PDF</Text>
-          <Text style={styles.pdfErrorSub}>Check your internet connection and try again.</Text>
-        </View>
-      )}
-    </View>
-  );
-}
 
 function StarRating({ bookId, initialRating, initialAvg, initialCount, token, onRated }) {
   const [userRating, setUserRating]   = useState(initialRating);
@@ -170,7 +84,7 @@ export default function Categories() {
   const [ratings, setRatings]                   = useState({});
   const [loading, setLoading]                   = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [pdfBook, setPdfBook]                   = useState(null); // { url, title }
+  const [pdfBook, setPdfBook]                   = useState(null); 
 
   const handleRated = useCallback((bookId, data) => {
     setRatings(prev => ({ ...prev, [bookId]: data }));
@@ -277,11 +191,13 @@ export default function Categories() {
               <TouchableOpacity
                 style={styles.readBtn}
                 onPress={() => {
-                  const url = item.pdfUrl;
-                  if (url?.toLowerCase().endsWith('.pdf')) {
-                    setPdfBook({ url, title: item.title });
-                  } else {
+                  const url = item.pdfUrl || item.pdfPath || '';
+                  if (url.toLowerCase().includes('.pdf')) {
+                    setPdfBook(item);
+                  } else if (url) {
                     Linking.openURL(url);
+                  } else {
+                    Alert.alert('Unavailable', 'No file available for this book.');
                   }
                 }}
               >
@@ -292,21 +208,11 @@ export default function Categories() {
         }}
       />
 
-      <Modal
-        visible={!!pdfBook}
-        animationType="slide"
-        onRequestClose={() => setPdfBook(null)}
-      >
-        <View style={styles.pdfContainer}>
-          <View style={styles.pdfHeader}>
-            <TouchableOpacity onPress={() => setPdfBook(null)} style={styles.pdfBackBtn}>
-              <Text style={styles.pdfBackText}>← Back</Text>
-            </TouchableOpacity>
-            <Text style={styles.pdfTitle} numberOfLines={1}>{pdfBook?.title || 'Book'}</Text>
-          </View>
-          {pdfBook && <PdfViewer url={pdfBook.url} />}
-        </View>
-      </Modal>
+      <PdfViewerModal
+        book={pdfBook}
+        token={user?.token}
+        onClose={() => setPdfBook(null)}
+      />
     </View>
   );
 }
