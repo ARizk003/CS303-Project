@@ -12,7 +12,7 @@ router.post('/', auth, async (req, res) => {
             return res.status(400).json({ msg: 'All fields are required' });
         }
 
-        // Check if user already has a pending request for this book
+        
         const existing = await BorrowRequest.findOne({
             user: req.user.id,
             book: bookId,
@@ -39,7 +39,7 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// GET /api/borrow — admin gets all borrow requests
+
 router.get('/', auth, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
@@ -58,7 +58,7 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-// PATCH /api/borrow/:id — admin updates request status
+
 router.patch('/:id', auth, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
