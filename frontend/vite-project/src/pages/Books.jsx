@@ -136,7 +136,7 @@ function Books() {
                                         className="btn w-100 py-2 fw-bold mt-auto"
                                         style={{ borderRadius: "12px", backgroundColor: "#f39c12", color: "#fff", border: "none" }}
                                     >
-                                        Join us
+                                        preview
                                     </button>
                                 </div>
                             </div>

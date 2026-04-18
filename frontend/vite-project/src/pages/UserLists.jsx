@@ -522,6 +522,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const UserLists = () => {
     const [lists, setLists] = useState([]);
@@ -530,6 +531,7 @@ const UserLists = () => {
     const [loading, setLoading] = useState(false);
     const [newListTitle, setNewListTitle] = useState('');
     const [viewMode, setViewMode] = useState('myList'); // 'myList' or 'browse'
+    const navigate = useNavigate();
 
     const { user } = useContext(AuthContext);
     const token = localStorage.getItem('token');
@@ -577,6 +579,14 @@ const UserLists = () => {
             alert("Book added!");
         } catch (err) { alert("Book already in list or error occurred"); }
     };
+
+        const openBook = (book) => {
+        if (!user) {
+            navigate('/login', { state: { message: 'Please sign in or create an account to explore books.' } });
+            return;
+        }
+        navigate('/read-book', { state: { book } });
+        };
 
     const removeBook = async (bookId) => {
         try {
@@ -639,6 +649,7 @@ const UserLists = () => {
                                                 {activeList.booksIds.map(book => (
                                                     <tr key={book._id}>
                                                         <td><strong>{book.title}</strong><br/><small>{book.author}</small></td>
+                                                        <td className="text-end"><button className="btn btn-sm btn-outline-warning" onClick={() => openBook(book)}>Preview</button></td>
                                                         <td className="text-end"><button className="btn btn-sm btn-outline-danger" onClick={() => removeBook(book._id)}>Remove</button></td>
                                                     </tr>
                                                 ))}
