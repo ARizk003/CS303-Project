@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head> 
+  <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self'; 
-                   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com/gsi/client https://www.chatbase.co; 
-                   connect-src 'self' http://localhost:5000 ws://localhost:* https://accounts.google.com/gsi/ https://www.chatbase.co; 
-                   frame-src https://accounts.google.com/ https://www.chatbase.co; 
-                   style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; 
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self';
+                   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com/gsi/client https://www.chatbase.co https://cdnjs.cloudflare.com;
+                   connect-src 'self' http://localhost:5000 ws://localhost:* https://accounts.google.com/gsi/ https://www.chatbase.co https://cdnjs.cloudflare.com;
+                   frame-src https://accounts.google.com/ https://www.chatbase.co http://localhost:5000;
+                   worker-src blob:;
+                   style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style;
                    font-src 'self' data:;">
-    
+
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>vite-project</title>
@@ -17,9 +18,9 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    
+
     <script>
-      (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="1z-0HVnhilJA-GBj4C31a";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+      (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...args)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="1z-0HVnhilJA-GBj4C31a";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
     </script>
   </body>
 </html>
