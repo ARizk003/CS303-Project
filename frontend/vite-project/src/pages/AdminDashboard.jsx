@@ -19,8 +19,9 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
 
     const [newBook, setNewBook] = useState({
-        title: '', author: '', category: '', pdfUrl: '', selectedTagIds: []
+        title: '', author: '', category: '', selectedTagIds: []
     });
+    const [newBookFile, setNewBookFile] = useState(null);
 
     const token = localStorage.getItem('token');
 
@@ -118,15 +119,25 @@ const AdminDashboard = () => {
 
     const handleAddBook = async (e) => {
         e.preventDefault();
+        if (!newBookFile) {
+            alert('Please select a PDF file');
+            return;
+        }
         try {
+            const formData = new FormData();
+            formData.append('title', newBook.title);
+            formData.append('author', newBook.author);
+            formData.append('category', newBook.category);
+            formData.append('pdf', newBookFile);
+
             const res = await axios.post('http://localhost:5000/api/books',
-                { title: newBook.title, author: newBook.author, category: newBook.category, pdfUrl: newBook.pdfUrl },
-                { headers: { 'x-auth-token': token } }
+                formData,
+                { headers: { 'x-auth-token': token, 'Content-Type': 'multipart/form-data' } }
             );
             const newBookId = res.data._id;
 
             if (newBook.selectedTagIds.length > 0) {
-                await axios.put(
+                await axios.post(
                     `http://localhost:5000/api/books/${newBookId}/tags`,
                     { tag_ids: newBook.selectedTagIds },
                     { headers: { 'x-auth-token': token } }
@@ -135,11 +146,12 @@ const AdminDashboard = () => {
 
             alert('Book added successfully');
             setShowAddBookModal(false);
-            setNewBook({ title: '', author: '', category: '', pdfUrl: '', selectedTagIds: [] });
+            setNewBook({ title: '', author: '', category: '', selectedTagIds: [] });
+            setNewBookFile(null);
             fetchBooks();
         } catch (err) {
             console.error(err);
-            alert('Failed to add book');
+            alert(err.response?.data?.msg || 'Failed to add book');
         }
     };
 
@@ -147,7 +159,7 @@ const AdminDashboard = () => {
         e.preventDefault();
         try {
             await axios.put(`http://localhost:5000/api/books/${selectedBook._id}`,
-                { title: selectedBook.title, author: selectedBook.author, category: selectedBook.category, pdfUrl: selectedBook.pdfUrl },
+                { title: selectedBook.title, author: selectedBook.author, category: selectedBook.category },
                 { headers: { 'x-auth-token': token } }
             );
 
@@ -163,7 +175,7 @@ const AdminDashboard = () => {
             fetchBooks();
         } catch (err) {
             console.error(err);
-            alert('Failed to update book');
+            alert(err.response?.data?.msg || 'Failed to update book');
         }
     };
 
@@ -441,9 +453,14 @@ const AdminDashboard = () => {
                                         )}
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">PDF URL</label>
-                                        <input type="url" className="form-control" value={newBook.pdfUrl}
-                                            onChange={(e) => setNewBook({ ...newBook, pdfUrl: e.target.value })} required />
+                                        <label className="form-label fw-bold">PDF File</label>
+                                        <input
+                                            type="file"
+                                            className="form-control"
+                                            accept=".pdf"
+                                            onChange={(e) => setNewBookFile(e.target.files[0] || null)}
+                                            required
+                                        />
                                     </div>
                                     <button type="submit" className="btn text-white w-100" style={{ backgroundColor: '#C5A059' }}>
                                         Add Book
@@ -500,11 +517,6 @@ const AdminDashboard = () => {
                                                 ))}
                                             </div>
                                         )}
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label fw-bold">PDF URL</label>
-                                        <input type="url" className="form-control" value={selectedBook.pdfUrl}
-                                            onChange={(e) => setSelectedBook({ ...selectedBook, pdfUrl: e.target.value })} required />
                                     </div>
                                     <button type="submit" className="btn text-white w-100" style={{ backgroundColor: '#C5A059' }}>
                                         Update Book
