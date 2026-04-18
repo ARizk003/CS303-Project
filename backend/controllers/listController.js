@@ -30,19 +30,17 @@ exports.removeBookFromLists = async (req, res) => {
         const {bookId} = req.body;
         const userId = req.user.id;
 
-        // $pull to remove specfic item
         const updatedList = await List.findOneAndUpdate(
             {_id: listId, userId: userId},
             {$pull: {booksIds: bookId}},
-            {new: true} // This returns the list AFTER the book was deleted
-        ).populate('booksIds'); //returns the full book details to the frontend
+            {new: true} 
+        ).populate('booksIds'); 
 
         if (!updatedList) {
             return res.status(404).json({message: "List not found or unauthorized"});
         }
 
 
-        //Return the updated data
         res.status(200).json({
             message: "Book removed successfully to List",
             list: updatedList
@@ -58,19 +56,16 @@ exports.removeBookFromLists = async (req, res) => {
 exports.createList = async (req, res) => {
     try {
         const { title } = req.body;
-        const userId = req.user.id; // From your auth middleware
+        const userId = req.user.id; 
 
-        // 1. Create the new list
         const newList = new List({
             title,
             userId,
-            booksIds: [] // Start with an empty array
+            booksIds: []
         });
 
-        // 2. Save the list to the database
         await newList.save();
 
-        // 3. Sync: Add this List's ID to the User's "lists" array
         await User.findByIdAndUpdate(userId, {
             $push: { lists: newList._id }
         });
@@ -92,7 +87,6 @@ exports.deleteList = async (req, res) => {
         const {listId} = req.params;
         const userId = req.user.id;
 
-        // 1. Delete the list and capture its data in ONE query
         const deletedList = await List.findOneAndDelete({
             _id: listId,
             userId: userId
@@ -102,7 +96,6 @@ exports.deleteList = async (req, res) => {
             return res.status(404).json({message: "List not found or unauthorized"});
         }
 
-        // 2. Cleanup User: Remove this list reference from the User
         await User.findByIdAndUpdate(userId, {
             $pull: {lists: listId}
         });
@@ -154,22 +147,20 @@ exports.addBookToList = async (req, res) => {
     try {
         const {listId} = req.params;
         const {bookId} = req.body;
-        const userId = req.user.id; // Taken from Auth Middleware for security
+        const userId = req.user.id; 
 
-        //Update the List & Verify Ownership in one step
-        // $addToSet to prevent duplicates
+
         const updatedList = await List.findOneAndUpdate(
             {_id: listId, userId: userId},
             {$addToSet: {booksIds: bookId}},
-            {new: true} // This returns the list AFTER the book was added
-        ).populate('booksIds'); //returns the full book details to the frontend
+            {new: true} 
+        ).populate('booksIds');
 
         if (!updatedList) {
             return res.status(404).json({message: "List not found or unauthorized"});
         }
 
 
-        //Return the updated data
         res.status(200).json({
             message: "Book added successfully to List",
             list: updatedList
