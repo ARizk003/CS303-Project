@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import StarRating from "../components/StarRating.jsx";
 
 const PDFJS_VERSION = "3.11.174";
 const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
@@ -17,6 +18,8 @@ export default function ReadBook() {
   const location = useLocation();
   const navigate = useNavigate();
   const { book } = location.state || {};
+
+  const [currentRating, setCurrentRating] = useState(0);
 
   // ─── Mode: "choose" | "reading" | "borrow-form" ───
   const [mode, setMode] = useState("choose");
@@ -91,6 +94,20 @@ export default function ReadBook() {
       setLoading(false);
       renderPage(1);
     };
+
+    useEffect(() => {
+      if (book?._id) {
+        const token = localStorage.getItem("token");
+        axios.get(`${API_URL}/api/books/${book._id}/rating`, {
+          headers: { 'x-auth-token': token }
+        }).then(res => {
+          if (res.data.user_rating) setCurrentRating(res.data.user_rating);
+        });
+      }
+    }, [book?._id]);
+
+
+
 
     const init = async () => {
       if (!window.pdfjsLib) {
@@ -169,6 +186,27 @@ export default function ReadBook() {
     setBorrowLoading(false);
   };
 
+
+
+  const handleRate = async (score) => {
+    try {
+      const token = localStorage.getItem("token");
+      // Calls the rateBook endpoint
+      const res = await axios.post(
+          `${API_URL}/api/books/${book._id}/rate`,
+          { rating: score },
+          { headers: { "x-auth-token": token } }
+      );
+      setCurrentRating(res.data.your_rating);
+      alert(res.data.msg); // "Rating updated" or "Rating submitted"
+    } catch (err) {
+      alert(err.response?.data?.msg || "Failed to submit rating");
+    }
+  };
+
+
+
+
   // ════════════════════════════════════════
   //  SCREEN 1 – Choose mode
   // ════════════════════════════════════════
@@ -179,6 +217,12 @@ export default function ReadBook() {
           <button onClick={() => navigate(-1)} style={chooseStyles.closeBtn}>✕</button>
           <div style={{ fontSize: "3rem", marginBottom: 8 }}>📖</div>
           <h2 style={{ fontWeight: 800, fontSize: "1.4rem", color: "#1a1a1a", marginBottom: 4 }}>{book?.title}</h2>
+
+          <div className="mb-4">
+            <p className="small text-muted mb-1">How would you rate this book?</p>
+            <StarRating initialRating={currentRating} onRate={handleRate} />
+          </div>
+
           <p style={{ color: "#888", marginBottom: 20, fontSize: "0.95rem" }}>by {book?.author}</p>
           <p style={{ color: "#555", marginBottom: 28, fontSize: "1rem" }}>How would you like to access this book?</p>
           <div style={chooseStyles.btnGroup}>

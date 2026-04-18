@@ -2,6 +2,37 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import StarRating from "../components/StarRating.jsx";
+
+
+const BookRatingDisplay = ({ bookId }) => {
+    const [stats, setStats] = useState({ average_rating: 0, ratings_count: 0 });
+
+    useEffect(() => {
+        const fetchRating = async () => {
+            try {
+                // Uses the getBookRating endpoint
+                const res = await axios.get(`http://localhost:5000/api/books/${bookId}/rating`);
+                setStats(res.data); // data contains average_rating and ratings_count
+            } catch (err) {
+                console.error("Error fetching rating", err);
+            }
+        };
+        fetchRating();
+    }, [bookId]);
+
+    return (
+        <div className="mb-2">
+            <StarRating initialRating={stats.average_rating} readonly={true} />
+            <small className="text-muted">({stats.ratings_count} reviews)</small>
+        </div>
+    );
+};
+
+
+
+
+
 
 function Books() {
     const [books, setBooks] = useState([]);
@@ -12,6 +43,10 @@ function Books() {
     const { user } = useContext(AuthContext);
 
     const API_URL = "http://localhost:5000";
+
+
+
+
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -88,6 +123,13 @@ function Books() {
                                 </div>
                                 <div className="card-body p-4 text-center d-flex flex-column">
                                     <h6 className="fw-bold mb-1">{book.title}</h6>
+
+                                  z
+
+                                    <BookRatingDisplay bookId={book._id} />
+
+
+
                                     <p className="text-muted small mb-3">by {book.author}</p>
                                     <button
                                         onClick={() => openBook(book)}
@@ -115,4 +157,9 @@ function Books() {
     );
 }
 
+
+
+
 export default Books;
+
+
