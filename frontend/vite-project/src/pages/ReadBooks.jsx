@@ -152,7 +152,7 @@ export default function ReadBook() {
     );
   }
 
-  // ── BORROW FORM ──
+
   if (mode === "borrow-form") {
     return (
       <div style={chooseStyles.overlay}>

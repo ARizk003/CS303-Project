@@ -92,7 +92,7 @@ const AdminDashboard = () => {
         setLoading(false);
     };
 
-    // إنشاء تاج جديد عبر POST /api/tags
+   
     const handleCreateTag = async (e) => {
         e.preventDefault();
         if (!newTagName.trim()) return;
@@ -112,7 +112,7 @@ const AdminDashboard = () => {
         }
     };
 
-    // حذف تاج
+    
     const handleDeleteTag = async (tagId) => {
         if (!window.confirm('Delete this tag?')) return;
         try {
