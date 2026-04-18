@@ -80,7 +80,6 @@ export default function Search() {
     setRatings(map);
   };
 
-  // derive filter options
   const allAuthors = useMemo(() => [...new Set(books.map(b => b.author))].sort(), [books]);
   const allTags    = useMemo(() => {
     const map = {};
@@ -174,14 +173,11 @@ export default function Search() {
               <TouchableOpacity
                 style={styles.readBtn}
                 onPress={() => {
-                  const url = item.pdfUrl || item.pdfPath || '';
-                  if (url.toLowerCase().includes('.pdf')) {
-                    setPdfBook(item);
-                  } else if (url) {
-                    Linking.openURL(url);
-                  } else {
-                    Alert.alert('Unavailable', 'No file available for this book.');
+                  if (!user?.token) {
+                    Alert.alert('Login required', 'Please log in to read books.');
+                    return;
                   }
+                  setPdfBook(item);
                 }}
               >
                 <Text style={styles.readBtnText}>Read</Text>

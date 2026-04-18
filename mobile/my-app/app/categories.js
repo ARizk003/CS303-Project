@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Linking, Alert, Modal,
+  StyleSheet, ActivityIndicator, Alert, Modal,
 } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -191,14 +191,11 @@ export default function Categories() {
               <TouchableOpacity
                 style={styles.readBtn}
                 onPress={() => {
-                  const url = item.pdfUrl || item.pdfPath || '';
-                  if (url.toLowerCase().includes('.pdf')) {
-                    setPdfBook(item);
-                  } else if (url) {
-                    Linking.openURL(url);
-                  } else {
-                    Alert.alert('Unavailable', 'No file available for this book.');
+                  if (!user?.token) {
+                    Alert.alert('Login required', 'Please log in to read books.');
+                    return;
                   }
+                  setPdfBook(item);
                 }}
               >
                 <Text style={styles.readBtnText}>Read</Text>
