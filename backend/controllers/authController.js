@@ -3,7 +3,7 @@ const jwt         = require("jsonwebtoken");
 const nodemailer  = require("nodemailer");
 const User        = require("../models/User");
 const { jwtSecret, jwtExpiration } = require("../config/jwt");
-
+//
 const {
   generateOtp,
   hashOtp,
