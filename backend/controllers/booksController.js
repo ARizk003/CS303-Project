@@ -41,18 +41,24 @@ exports.viewBook = async (req, res) => {
     const book = await Book.findById(req.params.id).select("pdfPath title");
     if (!book) return res.status(404).json({ msg: "Book not found" });
 
-    if (book.pdfPath.startsWith('http')) {
-      const response = await axios({
-        method: 'get',
-        url: book.pdfPath,
-        responseType: 'stream'
-      });
+   
+if (book.pdfPath.startsWith('http')) {
+  let pdfUrl = book.pdfPath;
+  if (pdfUrl.includes('cloudinary.com') && !pdfUrl.includes('/raw/upload/')) {
+    pdfUrl = pdfUrl.replace('/upload/', '/raw/upload/');
+  }
 
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(book.title)}.pdf"`);
-      
-      return response.data.pipe(res);
-    }
+  const response = await axios({
+    method: 'get',
+    url: pdfUrl,
+    responseType: 'stream'
+  });
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(book.title)}.pdf"`);
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  return response.data.pipe(res);
+}
 
     const oldPath = path.resolve(book.pdfPath);
     if (fs.existsSync(oldPath)) {

@@ -21,16 +21,16 @@ export default function ReadBook() {
 
   const [currentRating, setCurrentRating] = useState(0);
 
-  // ─── Mode: "choose" | "reading" | "borrow-form" ───
+
   const [mode, setMode] = useState("choose");
 
-  // ─── Borrow state ───
+
   const [borrowData, setBorrowData] = useState({ fullName: "", phone: "", address: "", nationalId: "" });
   const [borrowLoading, setBorrowLoading] = useState(false);
   const [borrowSuccess, setBorrowSuccess] = useState(false);
   const [borrowError, setBorrowError] = useState("");
 
-  // ─── PDF reader state ───
+
   const canvasRef = useRef(null);
   const drawingCanvasRef = useRef(null);
   const pdfDocRef = useRef(null);
@@ -39,10 +39,10 @@ export default function ReadBook() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [activeTool, setActiveTool] = useState("pen"); // pen | highlight | eraser
+  const [activeTool, setActiveTool] = useState("pen");
   const [activeColor, setActiveColor] = useState(COLORS[0].code);
 
-  // ─── Clear drawings for current page ───
+ 
   const clearAllDrawings = () => {
     if (drawingCanvasRef.current) {
       const ctx = drawingCanvasRef.current.getContext("2d");
@@ -51,7 +51,7 @@ export default function ReadBook() {
     }
   };
 
-  // ─── Render PDF page ───
+
   const renderPage = useCallback(async (pageNum) => {
     if (!pdfDocRef.current || !canvasRef.current) return;
     const page = await pdfDocRef.current.getPage(pageNum);
@@ -67,7 +67,6 @@ export default function ReadBook() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     await page.render({ canvasContext: ctx, viewport }).promise;
 
-    // Restore saved drawings for this page
     const savedDraw = localStorage.getItem(`drawings_${book?._id}_${pageNum}`);
     if (savedDraw) {
       const drawCtx = drawCanvas.getContext("2d");
@@ -77,7 +76,18 @@ export default function ReadBook() {
     }
   }, [book?._id]);
 
-  // ─── Load PDF when entering reading mode ───
+  useEffect(() => {
+    if (book?._id) {
+      const token = localStorage.getItem("token");
+      axios.get(`${API_URL}/api/books/${book._id}/rating`, {
+        headers: { 'x-auth-token': token }
+      }).then(res => {
+        if (res.data.user_rating) setCurrentRating(res.data.user_rating);
+      });
+    }
+  }, [book?._id]);
+
+ 
   useEffect(() => {
     if (mode !== "reading") return;
     if (!book?._id) { navigate("/books"); return; }
@@ -95,20 +105,6 @@ export default function ReadBook() {
       renderPage(1);
     };
 
-    useEffect(() => {
-      if (book?._id) {
-        const token = localStorage.getItem("token");
-        axios.get(`${API_URL}/api/books/${book._id}/rating`, {
-          headers: { 'x-auth-token': token }
-        }).then(res => {
-          if (res.data.user_rating) setCurrentRating(res.data.user_rating);
-        });
-      }
-    }, [book?._id]);
-
-
-
-
     const init = async () => {
       if (!window.pdfjsLib) {
         const s = document.createElement("script");
@@ -123,12 +119,11 @@ export default function ReadBook() {
     init();
   }, [mode, book, navigate, renderPage]);
 
-  // ─── Re-render on page change ───
+
   useEffect(() => {
     if (!loading && mode === "reading") renderPage(currentPage);
   }, [currentPage, loading, renderPage, mode]);
 
-  // ─── Drawing logic ───
   const draw = (e) => {
     if (!isDrawing.current) return;
     const ctx = drawingCanvasRef.current.getContext("2d");
@@ -167,7 +162,7 @@ export default function ReadBook() {
     );
   };
 
-  // ─── Borrow submit ───
+  
   const handleBorrowSubmit = async (e) => {
     e.preventDefault();
     setBorrowError("");
@@ -186,30 +181,23 @@ export default function ReadBook() {
     setBorrowLoading(false);
   };
 
-
-
+  
   const handleRate = async (score) => {
     try {
       const token = localStorage.getItem("token");
-      // Calls the rateBook endpoint
       const res = await axios.post(
           `${API_URL}/api/books/${book._id}/rate`,
           { rating: score },
           { headers: { "x-auth-token": token } }
       );
       setCurrentRating(res.data.your_rating);
-      alert(res.data.msg); // "Rating updated" or "Rating submitted"
+      alert(res.data.msg);
     } catch (err) {
       alert(err.response?.data?.msg || "Failed to submit rating");
     }
   };
 
 
-
-
-  // ════════════════════════════════════════
-  //  SCREEN 1 – Choose mode
-  // ════════════════════════════════════════
   if (mode === "choose") {
     return (
       <div style={chooseStyles.overlay}>
@@ -242,9 +230,6 @@ export default function ReadBook() {
     );
   }
 
-  // ════════════════════════════════════════
-  //  SCREEN 2 – Borrow form
-  // ════════════════════════════════════════
   if (mode === "borrow-form") {
     return (
       <div style={chooseStyles.overlay}>
@@ -320,7 +305,7 @@ export default function ReadBook() {
   }
 
   // ════════════════════════════════════════
-  //  SCREEN 3 – PDF Reader (heba's version)
+  //  SCREEN 3 – PDF Reader
   // ════════════════════════════════════════
   return (
     <div style={s.container}>
@@ -410,7 +395,6 @@ const chooseStyles = {
   },
 };
 
-// ─── Styles: PDF Reader screen ───
 const s = {
   container:  { display: "flex", flexDirection: "column", minHeight: "100vh", background: "#0b121e", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
   header:     { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 40px", background: "#151f2c", borderBottom: "1px solid rgba(197,160,89,0.2)", zIndex: 100 },
