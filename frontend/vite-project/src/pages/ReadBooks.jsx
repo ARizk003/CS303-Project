@@ -20,61 +20,84 @@ export default function ReadBook() {
   const { book } = location.state || {};
 
   const [currentRating, setCurrentRating] = useState(0);
-
-
   const [mode, setMode] = useState("choose");
-
-
   const [borrowData, setBorrowData] = useState({ fullName: "", phone: "", address: "", nationalId: "" });
   const [borrowLoading, setBorrowLoading] = useState(false);
   const [borrowSuccess, setBorrowSuccess] = useState(false);
   const [borrowError, setBorrowError] = useState("");
 
-
-  const canvasRef = useRef(null);
+  const canvasRef        = useRef(null);
   const drawingCanvasRef = useRef(null);
-  const pdfDocRef = useRef(null);
-  const isDrawing = useRef(false);
+  const pdfDocRef        = useRef(null);
+  const isDrawing        = useRef(false);
+  const renderingPageRef = useRef(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading,     setLoading]     = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [activeTool, setActiveTool] = useState("pen");
+  const [totalPages,  setTotalPages]  = useState(0);
+  const [activeTool,  setActiveTool]  = useState("pen");
   const [activeColor, setActiveColor] = useState(COLORS[0].code);
 
- 
-  const clearAllDrawings = () => {
-    if (drawingCanvasRef.current) {
-      const ctx = drawingCanvasRef.current.getContext("2d");
-      ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height);
-      localStorage.removeItem(`drawings_${book?._id}_${currentPage}`);
-    }
-  };
-
-
   const renderPage = useCallback(async (pageNum) => {
-    if (!pdfDocRef.current || !canvasRef.current) return;
-    const page = await pdfDocRef.current.getPage(pageNum);
+    if (!pdfDocRef.current || !canvasRef.current || !drawingCanvasRef.current) return;
+
+    if (renderingPageRef.current === pageNum) return;
+    renderingPageRef.current = pageNum;
+
+    const page     = await pdfDocRef.current.getPage(pageNum);
     const viewport = page.getViewport({ scale: 1.5 });
 
-    const canvas = canvasRef.current;
+    const canvas     = canvasRef.current;
     const drawCanvas = drawingCanvasRef.current;
 
     canvas.height = drawCanvas.height = viewport.height;
     canvas.width  = drawCanvas.width  = viewport.width;
 
-    const ctx = canvas.getContext("2d");
+    const ctx     = canvas.getContext("2d");
+    const drawCtx = drawCanvas.getContext("2d");
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     await page.render({ canvasContext: ctx, viewport }).promise;
 
-    const savedDraw = localStorage.getItem(`drawings_${book?._id}_${pageNum}`);
-    if (savedDraw) {
-      const drawCtx = drawCanvas.getContext("2d");
-      const img = new Image();
-      img.src = savedDraw;
-      img.onload = () => drawCtx.drawImage(img, 0, 0);
+    drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(
+        `${API_URL}/api/books/${book._id}/drawing/${pageNum}`,
+        { headers: { "x-auth-token": token } }
+      );
+
+      if (renderingPageRef.current !== pageNum) return;
+
+      if (res.data && res.data.drawingData) {
+        const img = new Image();
+        img.onload = () => {
+          if (renderingPageRef.current === pageNum) {
+            drawCtx.drawImage(img, 0, 0);
+          }
+        };
+        img.src = res.data.drawingData;
+      }
+    } catch (err) {
+      console.log("No saved drawing for this page");
     }
   }, [book?._id]);
+
+  const clearAllDrawings = async () => {
+    if (!drawingCanvasRef.current) return;
+    const ctx = drawingCanvasRef.current.getContext("2d");
+    ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `${API_URL}/api/books/${book._id}/drawing/${currentPage}`,
+        { headers: { "x-auth-token": token } }
+      );
+    } catch (err) {
+      console.error("Clear error:", err);
+    }
+  };
 
   useEffect(() => {
     if (book?._id) {
@@ -87,7 +110,6 @@ export default function ReadBook() {
     }
   }, [book?._id]);
 
- 
   useEffect(() => {
     if (mode !== "reading") return;
     if (!book?._id) { navigate("/books"); return; }
@@ -119,28 +141,27 @@ export default function ReadBook() {
     init();
   }, [mode, book, navigate, renderPage]);
 
-
   useEffect(() => {
     if (!loading && mode === "reading") renderPage(currentPage);
   }, [currentPage, loading, renderPage, mode]);
 
   const draw = (e) => {
     if (!isDrawing.current) return;
-    const ctx = drawingCanvasRef.current.getContext("2d");
+    const ctx  = drawingCanvasRef.current.getContext("2d");
     const rect = drawingCanvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x    = e.clientX - rect.left;
+    const y    = e.clientY - rect.top;
 
-    ctx.lineCap = "round";
+    ctx.lineCap  = "round";
     ctx.lineJoin = "round";
 
     if (activeTool === "pen") {
       ctx.globalCompositeOperation = "source-over";
-      ctx.lineWidth = 3;
+      ctx.lineWidth   = 3;
       ctx.strokeStyle = activeColor.replace("0.4", "1").replace("0.3", "1");
     } else if (activeTool === "highlight") {
       ctx.globalCompositeOperation = "multiply";
-      ctx.lineWidth = 25;
+      ctx.lineWidth   = 25;
       ctx.strokeStyle = activeColor;
     } else if (activeTool === "eraser") {
       ctx.globalCompositeOperation = "destination-out";
@@ -153,16 +174,43 @@ export default function ReadBook() {
     ctx.moveTo(x, y);
   };
 
-  const handleStopDrawing = () => {
+  const handleStopDrawing = async () => {
+    if (!isDrawing.current) return;
     isDrawing.current = false;
-    drawingCanvasRef.current.getContext("2d").beginPath();
-    localStorage.setItem(
-      `drawings_${book?._id}_${currentPage}`,
-      drawingCanvasRef.current.toDataURL()
-    );
+
+    const drawCanvas = drawingCanvasRef.current;
+    drawCanvas.getContext("2d").beginPath();
+
+    const savedPage = currentPage;
+
+    try {
+      const drawingData = drawCanvas.toDataURL();
+      const token       = localStorage.getItem("token");
+      await axios.post(
+        `${API_URL}/api/books/${book._id}/drawing`,
+        { pageNumber: savedPage, drawingData },
+        { headers: { "x-auth-token": token } }
+      );
+    } catch (err) {
+      console.error("Sync error:", err);
+    }
   };
 
-  
+  const handleRate = async (score) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `${API_URL}/api/books/${book._id}/rate`,
+        { rating: score },
+        { headers: { "x-auth-token": token } }
+      );
+      setCurrentRating(res.data.your_rating);
+      alert(res.data.msg);
+    } catch (err) {
+      alert(err.response?.data?.msg || "Failed to submit rating");
+    }
+  };
+
   const handleBorrowSubmit = async (e) => {
     e.preventDefault();
     setBorrowError("");
@@ -179,22 +227,6 @@ export default function ReadBook() {
       setBorrowError(err.response?.data?.msg || "Something went wrong, please try again.");
     }
     setBorrowLoading(false);
-  };
-
-  
-  const handleRate = async (score) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-          `${API_URL}/api/books/${book._id}/rate`,
-          { rating: score },
-          { headers: { "x-auth-token": token } }
-      );
-      setCurrentRating(res.data.your_rating);
-      alert(res.data.msg);
-    } catch (err) {
-      alert(err.response?.data?.msg || "Failed to submit rating");
-    }
   };
 
 
@@ -266,16 +298,16 @@ export default function ReadBook() {
 
               {borrowError && (
                 <div style={{ background: "#fdecea", border: "1px solid #e74c3c", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#c0392b", fontSize: "0.88rem" }}>
-                  ⚠️ {borrowError}
+                  {borrowError}
                 </div>
               )}
 
               <form onSubmit={handleBorrowSubmit}>
                 {[
-                  { label: "Full Name",    key: "fullName",  placeholder: "e.g. Ahmed Mohamed",      type: "text" },
-                  { label: "Phone Number", key: "phone",     placeholder: "e.g. 01012345678",         type: "tel"  },
-                  { label: "Address",      key: "address",   placeholder: "e.g. 15 El-Tahrir St, Cairo", type: "text" },
-                  { label: "National ID",  key: "nationalId",placeholder: "e.g. 29901011234567",      type: "text" },
+                  { label: "Full Name",    key: "fullName",   placeholder: "e.g. Ahmed Mohamed",         type: "text" },
+                  { label: "Phone Number", key: "phone",      placeholder: "e.g. 01012345678",            type: "tel"  },
+                  { label: "Address",      key: "address",    placeholder: "e.g. 15 El-Tahrir St, Cairo", type: "text" },
+                  { label: "National ID",  key: "nationalId", placeholder: "e.g. 29901011234567",         type: "text" },
                 ].map(({ label, key, placeholder, type }) => (
                   <div key={key} style={{ marginBottom: 14 }}>
                     <label style={{ display: "block", fontWeight: 600, fontSize: "0.88rem", marginBottom: 5, color: "#333" }}>{label}</label>
@@ -304,9 +336,7 @@ export default function ReadBook() {
     );
   }
 
-  // ════════════════════════════════════════
-  //  SCREEN 3 – PDF Reader
-  // ════════════════════════════════════════
+
   return (
     <div style={s.container}>
       <header style={s.header}>
@@ -317,9 +347,7 @@ export default function ReadBook() {
           <button onClick={() => setActiveTool("highlight")} style={{ ...s.tool, color: activeTool === "highlight" ? "#C5A059" : "#fff" }}>Highlight</button>
           <button onClick={() => setActiveTool("eraser")}    style={{ ...s.tool, color: activeTool === "eraser"    ? "#C5A059" : "#fff" }}>Eraser</button>
           <button onClick={clearAllDrawings} style={s.btnClear}>Clear All</button>
-
           <div style={s.vLine} />
-
           {COLORS.map(c => (
             <div
               key={c.id}
@@ -345,6 +373,7 @@ export default function ReadBook() {
                 ref={drawingCanvasRef}
                 onMouseDown={(e) => { isDrawing.current = true; draw(e); }}
                 onMouseUp={handleStopDrawing}
+                onMouseLeave={handleStopDrawing}
                 onMouseMove={draw}
                 style={s.drawCanvas}
               />
@@ -358,7 +387,6 @@ export default function ReadBook() {
   );
 }
 
-// ─── Styles: Choose / Borrow screens ───
 const chooseStyles = {
   overlay: {
     minHeight: "100vh",

@@ -3,11 +3,12 @@ const path = require("path");
 const fs   = require("fs");
 const Book = require("../models/Book");
 const Tag  = require("../models/Tag");
+const Annotation = require("../models/Annotation");
 
 exports.getAllBooks = async (req, res) => {
   try {
     const books = await Book.find()
-      .select("-pdfPath")         
+      .select("-pdfPath")
       .populate("tags", "name");
     res.json(books);
   } catch (err) {
@@ -28,7 +29,7 @@ exports.getBookById = async (req, res) => {
 
     res.json({
       ...book.toObject(),
-      viewUrl: `/api/books/${book._id}/view`  
+      viewUrl: `/api/books/${book._id}/view`
     });
   } catch (err) {
     console.error(err.message);
@@ -41,24 +42,23 @@ exports.viewBook = async (req, res) => {
     const book = await Book.findById(req.params.id).select("pdfPath title");
     if (!book) return res.status(404).json({ msg: "Book not found" });
 
-   
-if (book.pdfPath.startsWith('http')) {
-  let pdfUrl = book.pdfPath;
-  if (pdfUrl.includes('cloudinary.com') && !pdfUrl.includes('/raw/upload/')) {
-    pdfUrl = pdfUrl.replace('/upload/', '/raw/upload/');
-  }
+    if (book.pdfPath.startsWith('http')) {
+      let pdfUrl = book.pdfPath;
+      if (pdfUrl.includes('cloudinary.com') && !pdfUrl.includes('/raw/upload/')) {
+        pdfUrl = pdfUrl.replace('/upload/', '/raw/upload/');
+      }
 
-  const response = await axios({
-    method: 'get',
-    url: pdfUrl,
-    responseType: 'stream'
-  });
+      const response = await axios({
+        method: 'get',
+        url: pdfUrl,
+        responseType: 'stream'
+      });
 
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(book.title)}.pdf"`);
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  return response.data.pipe(res);
-}
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(book.title)}.pdf"`);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      return response.data.pipe(res);
+    }
 
     const oldPath = path.resolve(book.pdfPath);
     if (fs.existsSync(oldPath)) {
@@ -89,7 +89,7 @@ exports.addBook = async (req, res) => {
       title,
       author,
       category,
-      pdfPath: req.file.path,  
+      pdfPath: req.file.path,
       addedBy: req.user.id,
       tags: tag_ids && tag_ids.length > 0 ? [...new Set(tag_ids)] : []
     });
@@ -153,5 +153,55 @@ exports.updateBook = async (req, res) => {
     res.json({ msg: "Book updated" });
   } catch (err) {
     res.status(500).send("Server error");
+  }
+};
+
+
+exports.saveDrawing = async (req, res) => {
+  try {
+    const { pageNumber, drawingData } = req.body;
+    const bookId = req.params.id;
+
+    if (!drawingData) {
+      return res.status(400).json({ msg: "No drawing data provided" });
+    }
+
+    await Annotation.findOneAndUpdate(
+      { user: req.user.id, book: bookId, pageNumber },
+      { drawingData, date: Date.now() },
+      { upsert: true, new: true }
+    );
+    res.json({ msg: "Drawing saved" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+};
+
+exports.getDrawing = async (req, res) => {
+  try {
+    const annotation = await Annotation.findOne({
+      user: req.user.id,
+      book: req.params.id,
+      pageNumber: req.params.pageNumber,
+    });
+    res.json(annotation || { drawingData: null });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+};
+
+exports.deleteDrawing = async (req, res) => {
+  try {
+    await Annotation.findOneAndDelete({
+      user: req.user.id,
+      book: req.params.id,
+      pageNumber: req.params.pageNumber,
+    });
+    res.json({ msg: "Drawing deleted" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
   }
 };
