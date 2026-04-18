@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 function Books() {
     const [books, setBooks] = useState([]);
@@ -8,6 +9,7 @@ function Books() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
 
     const API_URL = "http://localhost:5000";
 
@@ -25,6 +27,10 @@ function Books() {
     }, []);
 
     const openBook = (book) => {
+        if (!user) {
+            navigate('/login', { state: { message: 'Please sign in or create an account to explore books.' } });
+            return;
+        }
         navigate('/read-book', { state: { book } });
     };
 
@@ -88,7 +94,7 @@ function Books() {
                                         className="btn w-100 py-2 fw-bold mt-auto"
                                         style={{ borderRadius: "12px", backgroundColor: "#f39c12", color: "#fff", border: "none" }}
                                     >
-                                        📖 Read Online
+                                        Join us
                                     </button>
                                 </div>
                             </div>
