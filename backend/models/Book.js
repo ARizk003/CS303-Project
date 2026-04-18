@@ -13,10 +13,12 @@ const BookSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  pdfUrl: {
+
+  pdfPath: {
     type: String,
     required: true
   },
+
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
@@ -38,7 +40,6 @@ const BookSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-
 });
 
 module.exports = mongoose.model("Book", BookSchema);

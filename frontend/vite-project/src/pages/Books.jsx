@@ -1,14 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import StarRating from "../components/StarRating.jsx";
+
+
+const BookRatingDisplay = ({ bookId }) => {
+    const [stats, setStats] = useState({ average_rating: 0, ratings_count: 0 });
+
+    useEffect(() => {
+        const fetchRating = async () => {
+            try {
+                // Uses the getBookRating endpoint
+                const res = await axios.get(`http://localhost:5000/api/books/${bookId}/rating`);
+                setStats(res.data); // data contains average_rating and ratings_count
+            } catch (err) {
+                console.error("Error fetching rating", err);
+            }
+        };
+        fetchRating();
+    }, [bookId]);
+
+    return (
+        <div className="mb-2">
+            <StarRating initialRating={stats.average_rating} readonly={true} />
+            <small className="text-muted">({stats.ratings_count} reviews)</small>
+        </div>
+    );
+};
+
+
+
+
+
 
 function Books() {
     const [books, setBooks] = useState([]);
     const [filteredBooks, setFilteredBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
+
+    const API_URL = "http://localhost:5000";
+
+
+
+
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/books')
+        const token = localStorage.getItem('token');
+        axios.get(`${API_URL}/api/books`, {
+            headers: { 'x-auth-token': token }
+        })
             .then(res => {
                 setBooks(res.data);
                 setFilteredBooks(res.data);
@@ -17,89 +61,83 @@ function Books() {
             .finally(() => setLoading(false));
     }, []);
 
+    const openBook = (book) => {
+        if (!user) {
+            navigate('/login', { state: { message: 'Please sign in or create an account to explore books.' } });
+            return;
+        }
+        navigate('/read-book', { state: { book } });
+    };
+
     useEffect(() => {
         const results = books.filter(book => {
             const searchLower = searchTerm.toLowerCase();
-            const titleMatch = book.title?.toLowerCase().includes(searchLower);
-            const authorMatch = book.author?.toLowerCase().includes(searchLower);
-            const tagsMatch = book.tags && book.tags.some(tag => {
-                const tagName = tag && typeof tag === 'object' ? tag.name : (tag || '');
-                return tagName.toLowerCase().includes(searchLower);
-            });
-            return titleMatch || tagsMatch || authorMatch;
+            return book.title?.toLowerCase().includes(searchLower) ||
+                   book.author?.toLowerCase().includes(searchLower);
         });
         setFilteredBooks(results);
     }, [searchTerm, books]);
 
     return (
-        <div className="container-fluid px-4 py-5" style={{ background: "#f1f3f5", minHeight: "100vh" }}>
+        <div className="container-fluid px-4 py-5" style={{ background: "#f8f9fa", minHeight: "100vh" }}>
+            <div className="text-center mb-5">
+                <h1 className="fw-bold" style={{ color: "#1a1a1a", fontSize: '3rem' }}>LearnNova Library</h1>
+                <p className="text-muted">Your Gateway to Knowledge</p>
+            </div>
 
-            <div className="text-center mb-5 mt-4">
-                <h1 className="display-3 fw-bold mb-3" style={{ color: "#1a1a1a", letterSpacing: "-1px" }}>
-                    Explore Our Masterpieces
-                </h1>
-                <div className="mx-auto mt-4" style={{ maxWidth: "600px" }}>
-                    <div className="input-group mb-3 shadow-sm" style={{ borderRadius: "15px", overflow: "hidden" }}>
-                        <span className="input-group-text bg-white border-0 ps-4"></span>
-                        <input
-                            type="text"
-                            className="form-control border-0 py-3"
-                            placeholder="Search by Title, Author or Tag..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ outline: "none", boxShadow: "none" }}
-                        />
-                    </div>
+            <div className="row justify-content-center mb-5">
+                <div className="col-md-6">
+                    <input
+                        type="text"
+                        className="form-control form-control-lg shadow-sm"
+                        placeholder="🔍 Search by title or author..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        style={{ borderRadius: "50px", border: "none", padding: "14px 25px" }}
+                    />
                 </div>
             </div>
 
             {loading ? (
                 <div className="text-center py-5">
-                    <div className="spinner-border" style={{ color: "#f39c12" }} role="status" />
+                    <div className="spinner-border text-warning" style={{ width: '3rem', height: '3rem' }} role="status" />
+                    <p className="mt-3 text-muted">Loading books...</p>
                 </div>
             ) : filteredBooks.length === 0 ? (
-                <div className="text-center py-5 text-muted fs-5">No books match your search.</div>
+                <div className="text-center py-5">
+                    <p style={{ fontSize: '3rem' }}>📚</p>
+                    <p className="text-muted">No books found.</p>
+                </div>
             ) : (
-                <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+                <div className="row row-cols-1 row-cols-md-3 row-cols-lg-5 g-4">
                     {filteredBooks.map((book) => (
                         <div className="col" key={book._id}>
-                            <div className="card h-100 border-0 shadow-sm book-card"
-                                style={{ borderRadius: "24px", overflow: "hidden", background: "#fff", transition: "all 0.4s ease" }}>
-
-                                <div className="position-relative" style={{ height: "300px" }}>
-                                    <img src="/Book.jpg" className="card-img-top h-100 w-100" alt={book.title} style={{ objectFit: "cover" }} />
-                                    <div className="card-img-overlay d-flex align-items-start justify-content-end p-3">
-                                        <span className="badge bg-dark bg-opacity-75 rounded-pill px-3 py-2">
-                                            {book.category}
-                                        </span>
-                                    </div>
+                            <div className="card h-100 border-0 shadow-sm book-card" style={{ borderRadius: "20px", overflow: 'hidden' }}>
+                                <div style={{ height: '280px', overflow: 'hidden' }}>
+                                    <img
+                                        src="/Book.jpg"
+                                        className="card-img-top h-100 w-100"
+                                        style={{ objectFit: "cover" }}
+                                        alt={book.title}
+                                    />
                                 </div>
-
                                 <div className="card-body p-4 text-center d-flex flex-column">
-                                    <h5 className="card-title fw-bold text-dark mb-1 text-truncate">{book.title}</h5>
-                                    <p className="card-text text-muted mb-3 small">by {book.author}</p>
+                                    <h6 className="fw-bold mb-1">{book.title}</h6>
 
-                                    <div className="mb-3 d-flex flex-wrap justify-content-center gap-1">
-                                        {book.tags && book.tags.map((tag, i) => (
-                                            <span
-                                                key={tag._id || i}
-                                                className="badge rounded-pill border fw-normal"
-                                                style={{ fontSize: "0.7rem", backgroundColor: "#f8f9fa", color: "#6c757d" }}
-                                            >
-                                                #{tag && typeof tag === 'object' ? tag.name : tag}
-                                            </span>
-                                        ))}
-                                    </div>
+                                  z
 
-                                    <a 
-                                        href={book.pdfUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="btn w-100 py-3 fw-bold shadow-sm mt-auto"
-                                        style={{ borderRadius: "16px", backgroundColor: "#f39c12", border: "none", color: "#fff" }}
+                                    <BookRatingDisplay bookId={book._id} />
+
+
+
+                                    <p className="text-muted small mb-3">by {book.author}</p>
+                                    <button
+                                        onClick={() => openBook(book)}
+                                        className="btn w-100 py-2 fw-bold mt-auto"
+                                        style={{ borderRadius: "12px", backgroundColor: "#f39c12", color: "#fff", border: "none" }}
                                     >
-                                        Explore Book
-                                    </a>
+                                        Join us
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -107,16 +145,21 @@ function Books() {
                 </div>
             )}
 
-            <style>
-                {`
-                    .book-card:hover {
-                        transform: translateY(-15px) scale(1.02);
-                        box-shadow: 0 25px 50px rgba(0,0,0,0.15) !important;
-                    }
-                `}
-            </style>
+            <style>{`
+                .book-card:hover {
+                    transform: translateY(-10px);
+                    transition: all 0.3s ease;
+                    box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+                }
+                .book-card { transition: all 0.3s ease; }
+            `}</style>
         </div>
     );
 }
 
+
+
+
 export default Books;
+
+

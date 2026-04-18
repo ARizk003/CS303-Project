@@ -3,6 +3,14 @@ const jwt         = require("jsonwebtoken");
 const nodemailer  = require("nodemailer");
 const User        = require("../models/User");
 const { jwtSecret, jwtExpiration } = require("../config/jwt");
+//
+const {
+  generateOtp,
+  hashOtp,
+  validatePassword,
+  sendOtpEmail,
+  sendPasswordChangedEmail
+} = require("../services/passwordResetService");
 
 const otpStore = {};
 
@@ -145,6 +153,116 @@ exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
     res.json(users);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  const genericMsg = "If that email is registered, you will receive an OTP shortly.";
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.json({ msg: genericMsg });
+    }
+
+    if (user.lastOtpSentAt) {
+      const secondsSinceLast = (Date.now() - new Date(user.lastOtpSentAt).getTime()) / 1000;
+      if (secondsSinceLast < 60) {
+        const waitSeconds = Math.ceil(60 - secondsSinceLast);
+        return res.status(429).json({
+          msg: `Please wait ${waitSeconds} seconds before requesting a new OTP.`
+        });
+      }
+    }
+
+    const otp = generateOtp();
+
+    const hashedOtp = hashOtp(otp);
+
+
+    user.resetOtp        = hashedOtp;
+    user.resetOtpExpire  = new Date(Date.now() + 10 * 60 * 1000);
+    user.otpAttempts     = 0;
+    user.lastOtpSentAt   = new Date();
+    await user.save();
+
+    await sendOtpEmail(email, otp);
+
+    console.log(`[PASSWORD RESET] OTP sent to ${email} at ${new Date().toISOString()}`);
+
+    res.json({ msg: genericMsg });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+
+exports.resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user || !user.resetOtp) {
+      return res.status(400).json({ msg: "No password reset request found for this email." });
+    }
+
+    if (user.otpAttempts >= 5) {
+      user.resetOtp       = null;
+      user.resetOtpExpire = null;
+      user.otpAttempts    = 0;
+      await user.save();
+      return res.status(429).json({
+        msg: "Too many failed attempts. Please request a new OTP."
+      });
+    }
+
+    if (new Date() > new Date(user.resetOtpExpire)) {
+      user.resetOtp       = null;
+      user.resetOtpExpire = null;
+      user.otpAttempts    = 0;
+      await user.save();
+      return res.status(400).json({ msg: "OTP has expired. Please request a new one." });
+    }
+
+    const hashedInput = hashOtp(otp);
+    if (hashedInput !== user.resetOtp) {
+      user.otpAttempts += 1;
+      await user.save();
+
+      const attemptsLeft = 5 - user.otpAttempts;
+      return res.status(400).json({
+        msg: `Invalid OTP. ${attemptsLeft} attempt(s) remaining.`
+      });
+    }
+
+    const passwordCheck = validatePassword(newPassword);
+    if (!passwordCheck.valid) {
+      return res.status(400).json({ msg: passwordCheck.msg });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    user.resetOtp       = null;
+    user.resetOtpExpire = null;
+    user.otpAttempts    = 0;
+
+    await user.save();
+
+    console.log(`[PASSWORD RESET] Password successfully reset for ${email} at ${new Date().toISOString()}`);
+
+    await sendPasswordChangedEmail(email);
+
+    res.json({ msg: "Password has been reset successfully." });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");

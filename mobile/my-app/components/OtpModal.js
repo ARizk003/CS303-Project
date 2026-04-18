@@ -52,7 +52,6 @@ export default function OtpModal({ visible, onClose, onVerified }) {
       <View style={styles.overlay}>
         <View style={styles.sheet}>
 
-          {/* Header */}
           <Text style={styles.title}>
             {step === 'email' ? 'Verify with Email' : 'Enter OTP Code'}
           </Text>

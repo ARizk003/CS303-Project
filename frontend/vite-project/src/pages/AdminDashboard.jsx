@@ -14,13 +14,15 @@ const AdminDashboard = () => {
     const [showEditBookModal, setShowEditBookModal] = useState(false);
     const [selectedBook, setSelectedBook] = useState(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [borrowRequests, setBorrowRequests] = useState([]);
 
     const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const [newBook, setNewBook] = useState({
-        title: '', author: '', category: '', pdfUrl: '', selectedTagIds: []
+        title: '', author: '', category: '', selectedTagIds: []
     });
+    const [newBookFile, setNewBookFile] = useState(null);
 
     const token = localStorage.getItem('token');
 
@@ -28,7 +30,32 @@ const AdminDashboard = () => {
         fetchAllTags();
         if (activeTab === 'users') fetchUsers();
         else if (activeTab === 'books') fetchBooks();
+        else if (activeTab === 'borrow') fetchBorrowRequests();
     }, [activeTab]);
+
+    const fetchBorrowRequests = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get('http://localhost:5000/api/borrow', {
+                headers: { 'x-auth-token': token }
+            });
+            setBorrowRequests(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+        setLoading(false);
+    };
+
+    const updateBorrowStatus = async (id, status) => {
+        try {
+            await axios.patch(`http://localhost:5000/api/borrow/${id}`, { status }, {
+                headers: { 'x-auth-token': token }
+            });
+            setBorrowRequests(prev => prev.map(r => r._id === id ? { ...r, status } : r));
+        } catch (err) {
+            alert('Failed to update status');
+        }
+    };
 
     const fetchAllTags = async () => {
         try {
@@ -65,7 +92,7 @@ const AdminDashboard = () => {
         setLoading(false);
     };
 
-    // إنشاء تاج جديد عبر POST /api/tags
+   
     const handleCreateTag = async (e) => {
         e.preventDefault();
         if (!newTagName.trim()) return;
@@ -85,7 +112,7 @@ const AdminDashboard = () => {
         }
     };
 
-    // حذف تاج
+    
     const handleDeleteTag = async (tagId) => {
         if (!window.confirm('Delete this tag?')) return;
         try {
@@ -118,15 +145,25 @@ const AdminDashboard = () => {
 
     const handleAddBook = async (e) => {
         e.preventDefault();
+        if (!newBookFile) {
+            alert('Please select a PDF file');
+            return;
+        }
         try {
+            const formData = new FormData();
+            formData.append('title', newBook.title);
+            formData.append('author', newBook.author);
+            formData.append('category', newBook.category);
+            formData.append('pdf', newBookFile);
+
             const res = await axios.post('http://localhost:5000/api/books',
-                { title: newBook.title, author: newBook.author, category: newBook.category, pdfUrl: newBook.pdfUrl },
-                { headers: { 'x-auth-token': token } }
+                formData,
+                { headers: { 'x-auth-token': token, 'Content-Type': 'multipart/form-data' } }
             );
             const newBookId = res.data._id;
 
             if (newBook.selectedTagIds.length > 0) {
-                await axios.put(
+                await axios.post(
                     `http://localhost:5000/api/books/${newBookId}/tags`,
                     { tag_ids: newBook.selectedTagIds },
                     { headers: { 'x-auth-token': token } }
@@ -135,11 +172,12 @@ const AdminDashboard = () => {
 
             alert('Book added successfully');
             setShowAddBookModal(false);
-            setNewBook({ title: '', author: '', category: '', pdfUrl: '', selectedTagIds: [] });
+            setNewBook({ title: '', author: '', category: '', selectedTagIds: [] });
+            setNewBookFile(null);
             fetchBooks();
         } catch (err) {
             console.error(err);
-            alert('Failed to add book');
+            alert(err.response?.data?.msg || 'Failed to add book');
         }
     };
 
@@ -147,7 +185,7 @@ const AdminDashboard = () => {
         e.preventDefault();
         try {
             await axios.put(`http://localhost:5000/api/books/${selectedBook._id}`,
-                { title: selectedBook.title, author: selectedBook.author, category: selectedBook.category, pdfUrl: selectedBook.pdfUrl },
+                { title: selectedBook.title, author: selectedBook.author, category: selectedBook.category },
                 { headers: { 'x-auth-token': token } }
             );
 
@@ -163,7 +201,7 @@ const AdminDashboard = () => {
             fetchBooks();
         } catch (err) {
             console.error(err);
-            alert('Failed to update book');
+            alert(err.response?.data?.msg || 'Failed to update book');
         }
     };
 
@@ -243,6 +281,14 @@ const AdminDashboard = () => {
                         style={activeTab === 'tags' ? { backgroundColor: '#002147', borderColor: '#002147' } : {}}>
                         <span className="fs-5 me-2">🏷️</span>
                         {!sidebarCollapsed && <span>Tags Management</span>}
+                    </button>
+
+                    <button
+                        className={`btn text-start mb-2 d-flex align-items-center ${activeTab === 'borrow' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                        onClick={() => setActiveTab('borrow')}
+                        style={activeTab === 'borrow' ? { backgroundColor: '#002147', borderColor: '#002147' } : {}}>
+                        <span className="fs-5 me-2">📦</span>
+                        {!sidebarCollapsed && <span>Borrow Requests</span>}
                     </button>
 
                     <hr />
@@ -441,9 +487,14 @@ const AdminDashboard = () => {
                                         )}
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">PDF URL</label>
-                                        <input type="url" className="form-control" value={newBook.pdfUrl}
-                                            onChange={(e) => setNewBook({ ...newBook, pdfUrl: e.target.value })} required />
+                                        <label className="form-label fw-bold">PDF File</label>
+                                        <input
+                                            type="file"
+                                            className="form-control"
+                                            accept=".pdf"
+                                            onChange={(e) => setNewBookFile(e.target.files[0] || null)}
+                                            required
+                                        />
                                     </div>
                                     <button type="submit" className="btn text-white w-100" style={{ backgroundColor: '#C5A059' }}>
                                         Add Book
@@ -501,11 +552,6 @@ const AdminDashboard = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label fw-bold">PDF URL</label>
-                                        <input type="url" className="form-control" value={selectedBook.pdfUrl}
-                                            onChange={(e) => setSelectedBook({ ...selectedBook, pdfUrl: e.target.value })} required />
-                                    </div>
                                     <button type="submit" className="btn text-white w-100" style={{ backgroundColor: '#C5A059' }}>
                                         Update Book
                                     </button>
@@ -515,6 +561,74 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
+
+                {/* Borrow Requests Tab */}
+                {activeTab === 'borrow' && (
+                    <div className="bg-white rounded shadow-sm p-4">
+                        <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                            <h2 className="mb-0" style={{ color: '#002147' }}>📦 Borrow Requests</h2>
+                            <span className="badge bg-warning text-dark fs-6">{borrowRequests.filter(r => r.status === 'pending').length} Pending</span>
+                        </div>
+                        {loading ? (
+                            <div className="text-center py-5">
+                                <div className="spinner-border" style={{ color: '#002147' }} role="status" />
+                            </div>
+                        ) : borrowRequests.length === 0 ? (
+                            <div className="text-center py-5 text-muted">
+                                <div style={{ fontSize: '3rem' }}>📭</div>
+                                <p>No borrow requests yet.</p>
+                            </div>
+                        ) : (
+                            <div className="table-responsive">
+                                <table className="table table-hover align-middle">
+                                    <thead style={{ backgroundColor: '#002147', color: 'white' }}>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Book</th>
+                                            <th>Full Name</th>
+                                            <th>Phone</th>
+                                            <th>Address</th>
+                                            <th>National ID</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {borrowRequests.map(req => (
+                                            <tr key={req._id}>
+                                                <td>
+                                                    <div className="fw-bold">{req.user?.username}</div>
+                                                    <small className="text-muted">{req.user?.email}</small>
+                                                </td>
+                                                <td className="fw-semibold">{req.book?.title}</td>
+                                                <td>{req.fullName}</td>
+                                                <td>{req.phone}</td>
+                                                <td>{req.address}</td>
+                                                <td>{req.nationalId}</td>
+                                                <td>{new Date(req.createdAt).toLocaleDateString()}</td>
+                                                <td>
+                                                    <span className={`badge ${req.status === 'pending' ? 'bg-warning text-dark' : req.status === 'approved' ? 'bg-success' : 'bg-danger'}`}>
+                                                        {req.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {req.status === 'pending' && (
+                                                        <div className="d-flex gap-2">
+                                                            <button className="btn btn-success btn-sm" onClick={() => updateBorrowStatus(req._id, 'approved')}>✓ Approve</button>
+                                                            <button className="btn btn-danger btn-sm" onClick={() => updateBorrowStatus(req._id, 'rejected')}>✕ Reject</button>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
+
         </div>
     );
 };

@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
@@ -13,6 +13,8 @@ function Login() {
 
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectMessage = location.state?.message;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -88,6 +90,14 @@ function Login() {
                                 <h2 className="fw-bold display-6 text-dark">Welcome Back</h2>
                                 <p className="text-muted">Login to your Learnova account</p>
                             </div>
+
+                            {redirectMessage && (
+                                <div className="alert d-flex align-items-center gap-2 mb-4"
+                                     style={{ background: "#fff8ec", border: "1px solid #f39c12", borderRadius: "12px", color: "#7d5a00" }}>
+                                    <span style={{ fontSize: "1.2rem" }}>🔒</span>
+                                    <span className="small fw-semibold">{redirectMessage}</span>
+                                </div>
+                            )}
 
                             {!showOtp ? (
                                 <>
