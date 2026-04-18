@@ -4,12 +4,16 @@ const mongoose = require("mongoose");
 //, user_list relationship can be represented by just adding userId in List attributes, refering a user
 const ListSchema = new mongoose.Schema({
     // 'name' is more descriptive
-    name: { type: String, required: true },
+    title: { type: String, required: true },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    }, 
+    },
+    booksIds: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Book'
+    }],
 });
 
 module.exports = mongoose.model("List", ListSchema);

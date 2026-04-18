@@ -633,7 +633,7 @@ const UserLists = () => {
                                 {viewMode === 'myList' ? (
                                     <>
                                         <h2 className="mb-4" style={{ fontFamily: 'serif', color: '#002147' }}>{activeList.title}</h2>
-                                        {activeList.booksIds.length > 0 ? (
+                                        {activeList.booksIds?.length > 0 ? (
                                             <table className="table table-hover">
                                                 <tbody>
                                                 {activeList.booksIds.map(book => (

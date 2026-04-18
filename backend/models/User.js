@@ -31,10 +31,7 @@ const UserSchema = new mongoose.Schema({
     default: Date.now
   },
 
-  lists: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'List'
-  }],
+  // ahmad: user_list relationship is handled in List.js, no need for lists attribute
 
   resetOtp: {
     type: String,
