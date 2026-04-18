@@ -1,5 +1,6 @@
 const express            = require("express");
 const router             = express.Router();
+const path               = require("path");
 const auth               = require("../middleware/auth");
 const { adminOnly }      = require("../middleware/auth");
 const booksController    = require("../controllers/booksController");
@@ -22,12 +23,13 @@ function optionalAuth(req, res, next) {
 }
 
 router.get("/search", booksController.searchBooks);
-
 router.get("/", booksController.getAllBooks);
-
 router.get("/:id", booksController.getBookById);
 
-router.get("/:id/view", auth, booksController.viewBook);
+router.get("/:id/view", auth, (req, res, next) => {
+
+    booksController.viewBook(req, res);
+});
 
 router.post(
   "/",
@@ -39,15 +41,12 @@ router.post(
 );
 
 router.post("/favorite", auth, booksController.addToFavorite);
-
 router.put("/:id", auth, adminOnly, booksController.updateBook);
-
 router.delete("/:id", auth, adminOnly, booksController.deleteBook);
 
 router.post("/:id/tags", auth, adminOnly, tagsController.assignTagsToBook);
 router.get("/:id/tags",  tagsController.getBookTags);
-
-router.post("/:id/rate",   auth,         ratingsController.rateBook);
+router.post("/:id/rate",   auth,          ratingsController.rateBook);
 router.get("/:id/rating",  optionalAuth, ratingsController.getBookRating);
 
 module.exports = router;

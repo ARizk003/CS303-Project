@@ -1,44 +1,44 @@
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
-const path   = require("path");
-const fs     = require("fs");
 
-const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, UPLOAD_DIR);
-  },
-
-  filename: (_req, file, cb) => {
-    const safeName = path
-      .basename(file.originalname)          
-      .replace(/[^a-zA-Z0-9._-]/g, "_");    
-
-    const uniqueName = `${Date.now()}_${safeName}`;
-    cb(null, uniqueName);
-  }
+cloudinary.config({
+  cloud_name: 'dmqw7igta', 
+  api_key: '472215833937423', 
+  api_secret: 'Y6Ptjhw24sIDk5gh_3xbtmLw6lA' 
 });
 
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "E-Library-Books",
+    resource_type: "raw", 
+    public_id: (req, file) => {
+      const safeName = file.originalname
+        .split(".")[0]
+        .replace(/[^a-zA-Z0-9._-]/g, "_");
+      return `${Date.now()}_${safeName}`;
+    },
+  },
+});
 
 const fileFilter = (_req, file, cb) => {
   if (file.mimetype === "application/pdf") {
     cb(null, true);
   } else {
     cb(
-      Object.assign(new Error("Only PDF files are allowed"), { code: "INVALID_TYPE" }),
+      Object.assign(new Error("Only PDF files are allowed"), {
+        code: "INVALID_TYPE",
+      }),
       false
     );
   }
 };
 
-
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB
+  limits: { fileSize: 10 * 1024 * 1024 }, 
 });
 
 const handleUploadError = (err, _req, res, next) => {
@@ -51,7 +51,8 @@ const handleUploadError = (err, _req, res, next) => {
     return res.status(400).json({ msg: err.message });
   }
 
-  next(err);
+  console.error("Cloudinary Upload Error:", err);
+  res.status(500).json({ msg: "Cloud upload failed", error: err.message });
 };
 
 module.exports = { upload, handleUploadError };
