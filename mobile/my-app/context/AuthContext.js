@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { BASE_URL } from '../config/api';
 
 export const AuthContext = createContext();
 
@@ -59,7 +60,7 @@ export const AuthProvider = ({ children }) => {
       return { success: false, msg: 'Enter a valid email address' };
     }
     try {
-      const res = await axios.post('http://192.168.1.8:5000/api/auth/register', {
+      const res = await axios.post(`${BASE_URL}/api/auth/register`, {
         username,
         email,
         password,
