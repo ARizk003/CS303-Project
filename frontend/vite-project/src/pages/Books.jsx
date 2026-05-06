@@ -11,9 +11,8 @@ const BookRatingDisplay = ({ bookId }) => {
     useEffect(() => {
         const fetchRating = async () => {
             try {
-                // Uses the getBookRating endpoint
                 const res = await axios.get(`http://localhost:5000/api/books/${bookId}/rating`);
-                setStats(res.data); // data contains average_rating and ratings_count
+                setStats(res.data);
             } catch (err) {
                 console.error("Error fetching rating", err);
             }
@@ -131,6 +130,15 @@ function Books() {
 
 
                                     <p className="text-muted small mb-3">by {book.author}</p>
+
+                                    <div className="mb-2">
+                                        {Array.isArray(book.tags) && book.tags.map((tag, i) => (
+                                            <span key={tag._id || i} className="badge bg-light text-dark border me-1">
+                                                {typeof tag === 'object' ? tag.name : tag}
+                                            </span>
+                                        ))}
+                                    </div>
+
                                     <button
                                         onClick={() => openBook(book)}
                                         className="btn w-100 py-2 fw-bold mt-auto"
