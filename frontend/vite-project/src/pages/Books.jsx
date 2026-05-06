@@ -4,6 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import StarRating from "../components/StarRating.jsx";
 
+const TAG_COLORS = [
+    { bg: "#FFE0E0", color: "#c0392b" },
+    { bg: "#E0F0FF", color: "#2471a3" },
+    { bg: "#E0FFE8", color: "#1e8449" },
+    { bg: "#FFF3E0", color: "#d35400" },
+    { bg: "#F3E0FF", color: "#7d3c98" },
+    { bg: "#E0FFFE", color: "#117a65" },
+    { bg: "#FFFBE0", color: "#b7950b" },
+    { bg: "#FFE0F5", color: "#a93226" },
+];
+
+const getTagColor = (index) => TAG_COLORS[index % TAG_COLORS.length];
 
 const BookRatingDisplay = ({ bookId }) => {
     const [stats, setStats] = useState({ average_rating: 0, ratings_count: 0 });
@@ -38,6 +50,8 @@ function Books() {
     const [filteredBooks, setFilteredBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedTag, setSelectedTag] = useState("");
+    const [allTags, setAllTags] = useState([]);
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
 
@@ -55,6 +69,16 @@ function Books() {
             .then(res => {
                 setBooks(res.data);
                 setFilteredBooks(res.data);
+
+                const tagsMap = new Map();
+                res.data.forEach(book => {
+                    if (Array.isArray(book.tags)) {
+                        book.tags.forEach(tag => {
+                            if (typeof tag === 'object') tagsMap.set(tag._id, tag.name);
+                        });
+                    }
+                });
+                setAllTags([...tagsMap.entries()].map(([_id, name]) => ({ _id, name })));
             })
             .catch(err => console.error("Error fetching books:", err))
             .finally(() => setLoading(false));
@@ -71,11 +95,19 @@ function Books() {
     useEffect(() => {
         const results = books.filter(book => {
             const searchLower = searchTerm.toLowerCase();
-            return book.title?.toLowerCase().includes(searchLower) ||
-                   book.author?.toLowerCase().includes(searchLower);
+            const matchesSearch = book.title?.toLowerCase().includes(searchLower) ||
+                                  book.author?.toLowerCase().includes(searchLower);
+            const matchesTag = selectedTag === "" || (
+                Array.isArray(book.tags) &&
+                book.tags.some(tag => (typeof tag === 'object' ? tag._id : tag) === selectedTag)
+            );
+            return matchesSearch && matchesTag;
         });
         setFilteredBooks(results);
-    }, [searchTerm, books]);
+    }, [searchTerm, selectedTag, books]);
+
+    const tagColorMap = {};
+    allTags.forEach((tag, i) => { tagColorMap[tag._id] = getTagColor(i); });
 
     return (
         <div className="container-fluid px-4 py-5" style={{ background: "#f8f9fa", minHeight: "100vh" }}>
@@ -84,7 +116,7 @@ function Books() {
                 <p className="text-muted">Your Gateway to Knowledge</p>
             </div>
 
-            <div className="row justify-content-center mb-5">
+            <div className="row justify-content-center mb-3">
                 <div className="col-md-6">
                     <input
                         type="text"
@@ -94,6 +126,44 @@ function Books() {
                         onChange={e => setSearchTerm(e.target.value)}
                         style={{ borderRadius: "50px", border: "none", padding: "14px 25px" }}
                     />
+                </div>
+            </div>
+
+            <div className="row justify-content-center mb-5">
+                <div className="col-md-8 d-flex flex-wrap gap-2 justify-content-center">
+                    <button
+                        className="btn btn-sm fw-bold"
+                        onClick={() => setSelectedTag("")}
+                        style={{
+                            borderRadius: "50px",
+                            backgroundColor: selectedTag === "" ? "#f39c12" : "#e9ecef",
+                            color: selectedTag === "" ? "#fff" : "#333",
+                            border: "none",
+                            padding: "6px 18px"
+                        }}
+                    >
+                        All
+                    </button>
+                    {allTags.map((tag, i) => {
+                        const c = getTagColor(i);
+                        const isActive = selectedTag === tag._id;
+                        return (
+                            <button
+                                key={tag._id}
+                                className="btn btn-sm fw-bold"
+                                onClick={() => setSelectedTag(isActive ? "" : tag._id)}
+                                style={{
+                                    borderRadius: "50px",
+                                    backgroundColor: isActive ? c.color : c.bg,
+                                    color: isActive ? "#fff" : c.color,
+                                    border: `1.5px solid ${c.color}`,
+                                    padding: "6px 18px"
+                                }}
+                            >
+                                {tag.name}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -131,12 +201,31 @@ function Books() {
 
                                     <p className="text-muted small mb-3">by {book.author}</p>
 
-                                    <div className="mb-2">
-                                        {Array.isArray(book.tags) && book.tags.map((tag, i) => (
-                                            <span key={tag._id || i} className="badge bg-light text-dark border me-1">
-                                                {typeof tag === 'object' ? tag.name : tag}
-                                            </span>
-                                        ))}
+                                    <div className="mb-2 d-flex flex-wrap gap-1 justify-content-center">
+                                        {Array.isArray(book.tags) && book.tags.map((tag, i) => {
+                                            const tagId = typeof tag === 'object' ? tag._id : tag;
+                                            const tagName = typeof tag === 'object' ? tag.name : tag;
+                                            const c = tagColorMap[tagId] || getTagColor(i);
+                                            const isActive = selectedTag === tagId;
+                                            return (
+                                                <span
+                                                    key={tagId || i}
+                                                    onClick={() => setSelectedTag(isActive ? "" : tagId)}
+                                                    style={{
+                                                        cursor: "pointer",
+                                                        borderRadius: "50px",
+                                                        padding: "3px 10px",
+                                                        fontSize: "0.75rem",
+                                                        fontWeight: "600",
+                                                        backgroundColor: isActive ? c.color : c.bg,
+                                                        color: isActive ? "#fff" : c.color,
+                                                        border: `1.5px solid ${c.color}`,
+                                                    }}
+                                                >
+                                                    {tagName}
+                                                </span>
+                                            );
+                                        })}
                                     </div>
 
                                     <button
