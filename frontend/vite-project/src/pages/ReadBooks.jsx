@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import StarRating from "../components/StarRating.jsx";
+import { AuthContext } from '../context/AuthContext';
 
 const PDFJS_VERSION = "3.11.174";
 const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
@@ -18,6 +19,8 @@ export default function ReadBook() {
   const location = useLocation();
   const navigate = useNavigate();
   const { book } = location.state || {};
+  const { user } = useContext(AuthContext);
+  const isAdmin = user?.role === 'admin';
 
   const [currentRating, setCurrentRating] = useState(0);
   const [mode, setMode] = useState("choose");
@@ -251,11 +254,13 @@ export default function ReadBook() {
               <strong>Read Online</strong>
               <span style={{ fontSize: "0.8rem", opacity: 0.85 }}>Open now in your browser</span>
             </button>
-            <button style={chooseStyles.borrowBtn} onClick={() => setMode("borrow-form")}>
-              <span style={{ fontSize: "1.5rem" }}>📦</span>
-              <strong>Borrow Book</strong>
-              <span style={{ fontSize: "0.8rem", opacity: 0.85 }}>Request a physical copy</span>
-            </button>
+            {!isAdmin && (
+              <button style={chooseStyles.borrowBtn} onClick={() => setMode("borrow-form")}>
+                <span style={{ fontSize: "1.5rem" }}>📦</span>
+                <strong>Borrow Book</strong>
+                <span style={{ fontSize: "0.8rem", opacity: 0.85 }}>Request a physical copy</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -335,7 +340,7 @@ export default function ReadBook() {
       </div>
     );
   }
-
+  
 
   return (
     <div style={s.container}>
@@ -361,7 +366,7 @@ export default function ReadBook() {
       </header>
 
       <div style={s.mainBody}>
-        <button style={{ ...s.sideNav, left: 30 }} disabled={currentPage === 1}          onClick={() => setCurrentPage(p => p - 1)}>❮</button>
+        <button style={{ ...s.sideNav, left: 30 }} disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>❮</button>
 
         <div style={s.viewer}>
           {loading ? (
