@@ -477,70 +477,7 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
-                {activeTab === 'borrow' && (
-                    <div className="bg-white rounded shadow-sm p-4">
-                        <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                            <h2 className="mb-0" style={{ color: '#002147' }}>Borrow Requests</h2>
-                            <span className="badge bg-warning text-dark fs-6">{borrowRequests.filter(r => r.status === 'pending').length} Pending</span>
-                        </div>
-                        {loading ? (
-                            <div className="text-center py-5">
-                                <div className="spinner-border" style={{ color: '#002147' }} role="status" />
-                            </div>
-                        ) : borrowRequests.length === 0 ? (
-                            <div className="text-center py-5 text-muted">
-                                <p>No borrow requests yet.</p>
-                            </div>
-                        ) : (
-                            <div className="table-responsive">
-                                <table className="table table-hover align-middle">
-                                    <thead style={{ backgroundColor: '#002147', color: 'white' }}>
-                                        <tr>
-                                            <th>User</th>
-                                            <th>Book</th>
-                                            <th>Full Name</th>
-                                            <th>Phone</th>
-                                            <th>Address</th>
-                                            <th>National ID</th>
-                                            <th>Date</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {borrowRequests.map(req => (
-                                            <tr key={req._id}>
-                                                <td>
-                                                    <div className="fw-bold">{req.user?.username}</div>
-                                                    <small className="text-muted">{req.user?.email}</small>
-                                                </td>
-                                                <td className="fw-semibold">{req.book?.title}</td>
-                                                <td>{req.fullName}</td>
-                                                <td>{req.phone}</td>
-                                                <td>{req.address}</td>
-                                                <td>{req.nationalId}</td>
-                                                <td>{new Date(req.createdAt).toLocaleDateString()}</td>
-                                                <td>
-                                                    <span className={`badge ${req.status === 'pending' ? 'bg-warning text-dark' : req.status === 'approved' ? 'bg-success' : 'bg-danger'}`}>
-                                                        {req.status}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    {req.status === 'pending' && (
-                                                        <div className="d-flex gap-2">
-                                                            <button className="btn btn-success btn-sm" onClick={() => updateBorrowStatus(req._id, 'approved')}>Approve</button>
-                                                            <button className="btn btn-danger btn-sm" onClick={() => updateBorrowStatus(req._id, 'rejected')}>Reject</button>
-                                                        </div>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                )}
+
             </div>
 
             {/* Add Book Modal */}
