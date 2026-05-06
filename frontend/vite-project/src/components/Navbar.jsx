@@ -197,7 +197,7 @@ const Navbar = () => {
               </li>
 
               {/* NEW: My Lists Link (Visible only to logged-in users) */}
-              {user && (
+              {user && !isAdmin && (
                   <li className="nav-item">
                     <Link
                         className={`nav-link custom-link ${location.pathname === '/my-lists' ? 'active-item' : ''}`}
