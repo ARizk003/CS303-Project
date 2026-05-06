@@ -101,7 +101,7 @@ exports.viewBook = async (req, res) => {
 
 exports.addBook = async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ msg: "PDF file is required" });
+    if (!req.pdfFile) return res.status(400).json({ msg: "PDF file is required" });
 
     const { title, author, category, tag_ids } = req.body;
     if (!title || !author || !category)
@@ -111,9 +111,10 @@ exports.addBook = async (req, res) => {
       title,
       author,
       category,
-      pdfPath: req.file.path,
-      addedBy: req.user.id,
-      tags:    tag_ids?.length ? [...new Set(tag_ids)] : [],
+      pdfPath:    req.pdfFile.path,
+      coverImage: req.coverFile ? req.coverFile.path : "",
+      addedBy:    req.user.id,
+      tags:       tag_ids?.length ? [...new Set(tag_ids)] : [],
     });
 
     await book.save();
@@ -180,7 +181,9 @@ exports.addToFavorite = async (req, res) => {
 
 exports.updateBook = async (req, res) => {
   try {
-    await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updateData = { ...req.body };
+    if (req.coverFile) updateData.coverImage = req.coverFile.path;
+    await Book.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json({ msg: "Book updated" });
   } catch (err) {
     res.status(500).send("Server error");

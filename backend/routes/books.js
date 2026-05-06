@@ -5,7 +5,7 @@ const { adminOnly }      = require("../middleware/auth");
 const booksController    = require("../controllers/booksController");
 const tagsController     = require("../controllers/tagsController");
 const ratingsController  = require("../controllers/ratingsController");
-const { upload, handleUploadError } = require("../middleware/upload");
+const { upload, uploadBookFiles, handleUploadError } = require("../middleware/upload");
 
 function optionalAuth(req, res, next) {
   const token = req.header("x-auth-token");
@@ -24,7 +24,7 @@ router.get("/", booksController.getAllBooks);
 router.get("/:id", booksController.getBookById);
 router.get("/:id/view", auth, booksController.viewBook);
 
-router.post("/", auth, adminOnly, upload.single("pdf"), handleUploadError, booksController.addBook);
+router.post("/", auth, adminOnly, uploadBookFiles, handleUploadError, booksController.addBook);
 router.post("/favorite", auth, booksController.addToFavorite);
 router.put("/:id", auth, adminOnly, booksController.updateBook);
 router.delete("/:id", auth, adminOnly, booksController.deleteBook);

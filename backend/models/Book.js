@@ -17,12 +17,13 @@ const BookSchema = new mongoose.Schema({
   pdfPath: {
     type: String,
     required: true
-  },
+},
 
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
+  coverImage: { type: String, default: "" },
 
   favorites: [
     {

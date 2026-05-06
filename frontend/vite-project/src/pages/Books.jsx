@@ -115,16 +115,16 @@ function Books() {
                             <div className="card h-100 border-0 shadow-sm book-card" style={{ borderRadius: "20px", overflow: 'hidden' }}>
                                 <div style={{ height: '280px', overflow: 'hidden' }}>
                                     <img
-                                        src="/Book.jpg"
-                                        className="card-img-top h-100 w-100"
-                                        style={{ objectFit: "cover" }}
-                                        alt={book.title}
+                                       src={book.coverImage || "/Book.jpg"}
+                                       className="card-img-top h-100 w-100"
+                                       style={{ objectFit: "cover" }}
+                                       alt={book.title}
                                     />
                                 </div>
                                 <div className="card-body p-4 text-center d-flex flex-column">
                                     <h6 className="fw-bold mb-1">{book.title}</h6>
 
-                                  z
+        
 
                                     <BookRatingDisplay bookId={book._id} />
 
