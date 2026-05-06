@@ -203,7 +203,21 @@ exports.forgotPassword = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-
+exports.googleLogin = async (req, res) => {
+    const { email, username } = req.body;
+    try {
+        let user = await User.findOne({ email });
+        if (!user) {
+            user = new User({ username, email, password: "google-auth", role: "student" });
+            await user.save();
+        }
+        const token = signToken(user);
+        res.json({ token, user: safeUser(user) });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+};
 
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;

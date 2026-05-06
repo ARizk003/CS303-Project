@@ -25,5 +25,5 @@ router.put("/update-role",  auth, authController.updateUserRole);
 router.get("/users",        auth, authController.getAllUsers);
 router.post("/forgot-password", forgotPasswordLimiter, authController.forgotPassword);
 router.post("/reset-password",  authController.resetPassword);
-
+router.post("/google-login", authController.googleLogin);
 module.exports = router;

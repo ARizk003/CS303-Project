@@ -8,8 +8,6 @@ import { jwtDecode } from 'jwt-decode';
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [otp, setOtp] = useState('');
-    const [showOtp, setShowOtp] = useState(false);
 
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -20,9 +18,7 @@ function Login() {
         e.preventDefault();
         try {
             const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
-            
             login(res.data.token, res.data.user);
-
             if (res.data.user && res.data.user.role === 'admin') {
                 navigate("/admin-dashboard");
             } else {
@@ -36,25 +32,16 @@ function Login() {
     const handleGoogleSuccess = async (credentialResponse) => {
         const decoded = jwtDecode(credentialResponse.credential);
         const googleEmail = decoded.email;
-
+        const googleName = decoded.name;
         try {
-            await axios.post("http://localhost:5000/api/auth/send-otp", { email: googleEmail });
-            setEmail(googleEmail);
-            setShowOtp(true);
-            alert("OTP sent to your email");
-        } catch (err) {
-            console.log(err);
-            alert("Error sending OTP");
-        }
-    };
-
-    const verifyOtp = async () => {
-        try {
-            const res = await axios.post("http://localhost:5000/api/auth/verify-otp", { email, otp });
+            const res = await axios.post("http://localhost:5000/api/auth/google-login", { 
+                email: googleEmail, 
+                username: googleName 
+            });
             login(res.data.token, res.data.user);
             navigate("/");
         } catch (err) {
-            alert("Invalid OTP");
+            alert(err.response?.data?.msg || "Google Login Failed");
         }
     };
 
@@ -99,52 +86,36 @@ function Login() {
                                 </div>
                             )}
 
-                            {!showOtp ? (
-                                <>
-                                    <form onSubmit={handleSubmit}>
-                                        <div className="mb-4">
-                                            <label className="form-label fw-bold">Email Address</label>
-                                            <input type="email" className="form-control form-control-lg border-0 shadow-sm py-3" 
-                                                   style={{ borderRadius: "15px", background: "#fff" }} 
-                                                   required onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="form-label fw-bold">Password</label>
-                                            <input type="password" className="form-control form-control-lg border-0 shadow-sm py-3" 
-                                                   style={{ borderRadius: "15px", background: "#fff" }} 
-                                                   required onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
-                                        </div>
-                                        <button className="btn btn-dark btn-lg w-100 py-3 mt-2 fw-bold" 
-                                                style={{ borderRadius: "15px", background: "#2c3e50" }}>Sign In</button>
-                                    </form>
-
-                                    <div className="text-center my-4 text-muted small">OR LOGIN WITH</div>
-                                    
-                                    <div className="d-flex justify-content-center">
-                                        <GoogleLogin 
-                                            onSuccess={handleGoogleSuccess} 
-                                            onError={() => alert("Google Login Failed")}
-                                            shape="pill"
-                                        />
-                                    </div>
-
-                                    <p className="text-center mt-5 mb-0">
-                                        New here? <Link to="/register" className="fw-bold text-decoration-none" style={{color: "#C5A059"}}>Create Account</Link>
-                                    </p>
-                                </>
-                            ) : (
-                                <div className="text-center py-4">
-                                    <h3 className="fw-bold mb-4">Verify Your Email</h3>
-                                    <p className="small text-muted mb-4">Enter the OTP sent to {email}</p>
-                                    <input type="text" className="form-control form-control-lg text-center mb-4 border-0 shadow-sm py-3" 
-                                           style={{ letterSpacing: "8px", fontSize: "1.5rem", borderRadius: "15px" }}
-                                           onChange={(e) => setOtp(e.target.value)} placeholder="000000" />
-                                    <button className="btn btn-primary btn-lg w-100 py-3 fw-bold" 
-                                            onClick={verifyOtp} style={{ borderRadius: "15px", background: "#C5A059", border: "none" }}>
-                                        Verify & Login
-                                    </button>
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-4">
+                                    <label className="form-label fw-bold">Email Address</label>
+                                    <input type="email" className="form-control form-control-lg border-0 shadow-sm py-3" 
+                                           style={{ borderRadius: "15px", background: "#fff" }} 
+                                           required onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
                                 </div>
-                            )}
+                                <div className="mb-4">
+                                    <label className="form-label fw-bold">Password</label>
+                                    <input type="password" className="form-control form-control-lg border-0 shadow-sm py-3" 
+                                           style={{ borderRadius: "15px", background: "#fff" }} 
+                                           required onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                                </div>
+                                <button className="btn btn-dark btn-lg w-100 py-3 mt-2 fw-bold" 
+                                        style={{ borderRadius: "15px", background: "#2c3e50" }}>Sign In</button>
+                            </form>
+
+                            <div className="text-center my-4 text-muted small">OR LOGIN WITH</div>
+                            
+                            <div className="d-flex justify-content-center">
+                                <GoogleLogin 
+                                    onSuccess={handleGoogleSuccess} 
+                                    onError={() => alert("Google Login Failed")}
+                                    shape="pill"
+                                />
+                            </div>
+
+                            <p className="text-center mt-5 mb-0">
+                                New here? <Link to="/register" className="fw-bold text-decoration-none" style={{color: "#C5A059"}}>Create Account</Link>
+                            </p>
                         </div>
                     </div>
                 </div>
