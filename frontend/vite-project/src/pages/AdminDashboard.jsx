@@ -9,6 +9,8 @@ const AdminDashboard = () => {
     const [books, setBooks] = useState([]);
     const [allTags, setAllTags] = useState([]);
     const [newTagName, setNewTagName] = useState('');
+    const [editingTag, setEditingTag] = useState(null);
+    const [editTagName, setEditTagName] = useState('');
     const [loading, setLoading] = useState(false);
     const [showAddBookModal, setShowAddBookModal] = useState(false);
     const [showEditBookModal, setShowEditBookModal] = useState(false);
@@ -92,7 +94,7 @@ const AdminDashboard = () => {
         setLoading(false);
     };
 
-   
+
     const handleCreateTag = async (e) => {
         e.preventDefault();
         if (!newTagName.trim()) return;
@@ -111,8 +113,8 @@ const AdminDashboard = () => {
             }
         }
     };
-
     
+
     const handleDeleteTag = async (tagId) => {
         if (!window.confirm('Delete this tag?')) return;
         try {
@@ -122,6 +124,21 @@ const AdminDashboard = () => {
             fetchAllTags();
         } catch (err) {
             alert('Failed to delete tag');
+        }
+    };
+
+    const handleEditTag = async (tagId) => {
+        if (!editTagName.trim()) return;
+        try {
+            await axios.put(`http://localhost:5000/api/tags/${tagId}`,
+                { name: editTagName.trim() },
+                { headers: { 'x-auth-token': token } }
+            );
+            setEditingTag(null);
+            setEditTagName('');
+            fetchAllTags();
+        } catch (err) {
+            alert('Failed to update tag');
         }
     };
 
@@ -403,7 +420,6 @@ const AdminDashboard = () => {
                             <h2 className="mb-0" style={{ color: '#002147' }}>Tags Management</h2>
                         </div>
 
-                        {/* إنشاء تاج جديد */}
                         <form onSubmit={handleCreateTag} className="d-flex gap-2 mb-4">
                             <input
                                 type="text"
@@ -418,7 +434,6 @@ const AdminDashboard = () => {
                             </button>
                         </form>
 
-                        {/* قائمة التاجز */}
                         <div className="d-flex flex-wrap gap-2">
                             {allTags.length === 0 ? (
                                 <p className="text-muted">No tags yet.</p>
@@ -426,16 +441,104 @@ const AdminDashboard = () => {
                                 allTags.map(tag => (
                                     <span key={tag._id} className="badge d-flex align-items-center gap-2 px-3 py-2 fs-6"
                                         style={{ backgroundColor: '#f8f9fa', color: '#002147', border: '1px solid #dee2e6' }}>
-                                        🏷️ {tag.name}
-                                        <button
-                                            className="btn-close btn-close-sm"
-                                            style={{ fontSize: '0.6rem' }}
-                                            onClick={() => handleDeleteTag(tag._id)}
-                                        />
+                                        
+                                        {editingTag === tag._id ? (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={editTagName}
+                                                    onChange={(e) => setEditTagName(e.target.value)}
+                                                    className="form-control form-control-sm"
+                                                    style={{ width: '100px' }}
+                                                    autoFocus
+                                                />
+                                                <button className="btn btn-sm btn-success py-0 px-1" onClick={() => handleEditTag(tag._id)}>✓</button>
+                                                <button className="btn btn-sm btn-secondary py-0 px-1" onClick={() => setEditingTag(null)}>✕</button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {tag.name}
+                                                <button
+                                                    className="btn btn-sm py-0 px-1"
+                                                    style={{ fontSize: '0.6rem' }}
+                                                    onClick={() => { setEditingTag(tag._id); setEditTagName(tag.name); }}
+                                                >✏️</button>
+                                                <button
+                                                    className="btn-close btn-close-sm"
+                                                    style={{ fontSize: '0.6rem' }}
+                                                    onClick={() => handleDeleteTag(tag._id)}
+                                                />
+                                            </>
+                                        )}
                                     </span>
                                 ))
                             )}
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'borrow' && (
+                    <div className="bg-white rounded shadow-sm p-4">
+                        <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                            <h2 className="mb-0" style={{ color: '#002147' }}>Borrow Requests</h2>
+                            <span className="badge bg-warning text-dark fs-6">{borrowRequests.filter(r => r.status === 'pending').length} Pending</span>
+                        </div>
+                        {loading ? (
+                            <div className="text-center py-5">
+                                <div className="spinner-border" style={{ color: '#002147' }} role="status" />
+                            </div>
+                        ) : borrowRequests.length === 0 ? (
+                            <div className="text-center py-5 text-muted">
+                                <p>No borrow requests yet.</p>
+                            </div>
+                        ) : (
+                            <div className="table-responsive">
+                                <table className="table table-hover align-middle">
+                                    <thead style={{ backgroundColor: '#002147', color: 'white' }}>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Book</th>
+                                            <th>Full Name</th>
+                                            <th>Phone</th>
+                                            <th>Address</th>
+                                            <th>National ID</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {borrowRequests.map(req => (
+                                            <tr key={req._id}>
+                                                <td>
+                                                    <div className="fw-bold">{req.user?.username}</div>
+                                                    <small className="text-muted">{req.user?.email}</small>
+                                                </td>
+                                                <td className="fw-semibold">{req.book?.title}</td>
+                                                <td>{req.fullName}</td>
+                                                <td>{req.phone}</td>
+                                                <td>{req.address}</td>
+                                                <td>{req.nationalId}</td>
+                                                <td>{new Date(req.createdAt).toLocaleDateString()}</td>
+                                                <td>
+                                                    <span className={`badge ${req.status === 'pending' ? 'bg-warning text-dark' : req.status === 'approved' ? 'bg-success' : 'bg-danger'}`}>
+                                                        {req.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {req.status === 'pending' && (
+                                                        <div className="d-flex gap-2">
+                                                            <button className="btn btn-success btn-sm" onClick={() => updateBorrowStatus(req._id, 'approved')}>Approve</button>
+                                                            <button className="btn btn-danger btn-sm" onClick={() => updateBorrowStatus(req._id, 'rejected')}>Reject</button>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
