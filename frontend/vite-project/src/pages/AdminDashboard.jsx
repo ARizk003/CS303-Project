@@ -559,7 +559,7 @@ const AdminDashboard = () => {
                                         </label>
                                         <textarea
                                             className="form-control"
-                                            placeholder="Write a compelling description about the book — what readers will learn, the key themes, and why it's worth reading..."
+                                            placeholder="Write a compelling description about the book — what readers will learn, the key themes, and why it's worth reading "
                                             value={newBook.description}
                                             onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
                                             style={textareaStyle}
@@ -572,7 +572,7 @@ const AdminDashboard = () => {
                                         </label>
                                         <textarea
                                             className="form-control"
-                                            placeholder="Share the author's background, expertise, academic achievements, and other notable works..."
+                                            placeholder="Share the author's background, expertise, academic achievements, etc"
                                             value={newBook.authorBio}
                                             onChange={(e) => setNewBook({ ...newBook, authorBio: e.target.value })}
                                             style={textareaStyle}
