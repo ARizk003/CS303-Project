@@ -28,6 +28,8 @@ export default function ReadBook() {
   const [borrowLoading, setBorrowLoading] = useState(false);
   const [borrowSuccess, setBorrowSuccess] = useState(false);
   const [borrowError, setBorrowError] = useState("");
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [bioExpanded, setBioExpanded] = useState(false);
 
   const canvasRef        = useRef(null);
   const drawingCanvasRef = useRef(null);
@@ -234,20 +236,99 @@ export default function ReadBook() {
 
 
   if (mode === "choose") {
+    const hasDescription = book?.description && book.description.trim().length > 0;
+    const hasAuthorBio   = book?.authorBio   && book.authorBio.trim().length > 0;
+    const Desc_Limit = 220;
+    const Bio_Limit  = 180;
+
     return (
       <div style={chooseStyles.overlay}>
         <div style={chooseStyles.card}>
           <button onClick={() => navigate(-1)} style={chooseStyles.closeBtn}>✕</button>
-          <div style={{ fontSize: "3rem", marginBottom: 8 }}>📖</div>
-          <h2 style={{ fontWeight: 800, fontSize: "1.4rem", color: "#1a1a1a", marginBottom: 4 }}>{book?.title}</h2>
+       <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 20, textAlign: "left" }}>
+            {book?.coverImage && (
+              <img
+                src={book.coverImage}
+                alt={book?.title}
+                style={{
+                  width: 90, height: 120, objectFit: "cover",
+                  borderRadius: 10, flexShrink: 0,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+                }}
+              />
+            )}
+            <div style={{ flex: 1 }}>
+              <h2 style={{ fontWeight: 800, fontSize: "1.35rem", color: "#1a1a1a", marginBottom: 4, lineHeight: 1.3 }}>
+                {book?.title}
+              </h2>
+              <p style={{ color: "#888", fontSize: "0.9rem", marginBottom: 10 }}>by {book?.author}</p>
 
-          <div className="mb-4">
-            <p className="small text-muted mb-1">How would you rate this book?</p>
-            <StarRating initialRating={currentRating} onRate={handleRate} />
+              //tags
+              {Array.isArray(book?.tags) && book.tags.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                  {book.tags.map((tag, i) => (
+                    <span key={tag._id || i} style={chooseStyles.tag}>
+                      {typeof tag === "object" ? tag.name : tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              
+              <div>
+                <p style={{ fontSize: "0.78rem", color: "#aaa", marginBottom: 4 }}>Rate this book</p>
+                <StarRating initialRating={currentRating} onRate={handleRate} />
+              </div>
+            </div>
           </div>
 
-          <p style={{ color: "#888", marginBottom: 20, fontSize: "0.95rem" }}>by {book?.author}</p>
-          <p style={{ color: "#555", marginBottom: 28, fontSize: "1rem" }}>How would you like to access this book?</p>
+         
+          {hasDescription && (
+            <div style={chooseStyles.infoBox}>
+              <div style={chooseStyles.infoBoxHeader}>
+                <span style={chooseStyles.infoBoxTitle}>About this Book</span>
+              </div>
+              <p style={chooseStyles.infoBoxText}>
+                {descExpanded || book.description.length <= Desc_Limit
+                  ? book.description
+                  : book.description.slice(0, Desc_Limit) + "…"}
+              </p>
+              {book.description.length > Desc_Limit && (
+                <button
+                  onClick={() => setDescExpanded(!descExpanded)}
+                  style={chooseStyles.readMoreBtn}
+                >
+                  {descExpanded ? "Show less ↑" : "Read more ↓"}
+                </button>
+              )}
+            </div>
+          )}
+
+          //author bio
+          {hasAuthorBio && (
+            <div style={{ ...chooseStyles.infoBox, background: "linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%)", borderColor: "#bde0f5" }}>
+              <div style={chooseStyles.infoBoxHeader}>
+                <span style={chooseStyles.infoBoxTitle}>About the Author</span>
+              </div>
+              <p style={{ ...chooseStyles.infoBoxText, fontStyle: "italic" }}>
+                {bioExpanded || book.authorBio.length <= Bio_Limit
+                  ? book.authorBio
+                  : book.authorBio.slice(0, Bio_Limit) + "…"}
+              </p>
+              {book.authorBio.length > Bio_Limit && (
+                <button
+                  onClick={() => setBioExpanded(!bioExpanded)}
+                  style={{ ...chooseStyles.readMoreBtn, color: "#3498db" }}
+                >
+                  {bioExpanded ? "Show less ↑" : "Read more ↓"}
+                </button>
+              )}
+            </div>
+          )}
+
+          <p style={{ color: "#555", margin: "20px 0 12px", fontSize: "0.95rem", fontWeight: 600 }}>
+            How would you like to access this book?
+          </p>
           <div style={chooseStyles.btnGroup}>
             <button style={chooseStyles.readBtn} onClick={() => setMode("reading")}>
               <span style={{ fontSize: "1.5rem" }}>💻</span>
@@ -340,7 +421,7 @@ export default function ReadBook() {
       </div>
     );
   }
-  
+
 
   return (
     <div style={s.container}>
@@ -400,28 +481,78 @@ const chooseStyles = {
     padding: 20,
   },
   card: {
-    background: "#fff", borderRadius: 24, padding: "48px 40px",
-    maxWidth: 460, width: "100%",
+    background: "#fff",borderRadius: 24,padding: "36px 32px",
+    maxWidth:520,width: "100%",
     boxShadow: "0 30px 80px rgba(0,0,0,0.4)",
-    position: "relative", textAlign: "center",
+    position: "relative",maxHeight: "90vh",overflowY: "auto",
   },
   closeBtn: {
     position: "absolute", top: 16, right: 18,
     background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#999",
   },
-  btnGroup: { display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" },
+  tag: {
+    background: "#f0f0f0",
+    color: "#555",
+    fontSize: "0.72rem",
+    fontWeight: 600,
+    padding: "3px 10px",
+    borderRadius: 20,
+    letterSpacing: "0.03em",
+    textTransform: "lowercase",
+  },
+  infoBox: {
+    background: "linear-gradient(135deg, #fffbf0 0%, #fff8e8 100%)",
+    border: "1px solid #f0d98a",
+    borderRadius: 14,
+    padding: "16px 18px",
+    marginBottom: 14,
+    textAlign: "left",
+  },
+  infoBoxHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  infoBoxIcon: {
+    fontSize: "1rem",
+  },
+  infoBoxTitle: {
+    fontWeight: 700,
+    fontSize: "0.88rem",
+    color: "#7a6020",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
+  infoBoxText: {
+    fontSize: "0.88rem",
+    color: "#444",
+    lineHeight: 1.65,
+    margin: 0,
+  },
+  readMoreBtn: {
+    background: "none",
+    border: "none",
+    padding: "4px 0 0",
+    fontSize: "0.8rem",
+    fontWeight: 700,
+    color: "#C5A059",
+    cursor: "pointer",
+    letterSpacing: "0.02em",
+  },
+  btnGroup: { display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" },
   readBtn: {
-    flex: 1, minWidth: 150,
+    flex: 1, minWidth: 140,
     display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-    padding: "20px 16px", borderRadius: 16,
+    padding: "18px 14px", borderRadius: 16,
     border: "2px solid #3498db",
     background: "linear-gradient(135deg, #3498db, #2980b9)",
     color: "#fff", cursor: "pointer", fontSize: "0.95rem",
   },
   borrowBtn: {
-    flex: 1, minWidth: 150,
+    flex: 1, minWidth: 140,
     display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-    padding: "20px 16px", borderRadius: 16,
+    padding: "18px 14px", borderRadius: 16,
     border: "2px solid #f39c12",
     background: "linear-gradient(135deg, #f39c12, #e67e22)",
     color: "#fff", cursor: "pointer", fontSize: "0.95rem",

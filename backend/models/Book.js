@@ -13,11 +13,18 @@ const BookSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-
+  description: {
+    type: String,
+    default: ""
+  },
+  authorBio: {
+    type: String,
+    default: ""
+  },
   pdfPath: {
     type: String,
     required: true
-},
+  },
 
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -30,7 +37,7 @@ const BookSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
     }
-  ], 
+  ],
   tags: [
     {
       type: mongoose.Schema.Types.ObjectId,

@@ -22,7 +22,7 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
 
     const [newBook, setNewBook] = useState({
-        title: '', author: '', category: '', selectedTagIds: []
+        title: '', author: '', category: '', description: '', authorBio: '', selectedTagIds: []
     });
     const [newBookFile, setNewBookFile] = useState(null);
     const [newCoverFile, setNewCoverFile] = useState(null);
@@ -173,6 +173,8 @@ const AdminDashboard = () => {
             formData.append('title', newBook.title);
             formData.append('author', newBook.author);
             formData.append('category', newBook.category);
+            formData.append('description', newBook.description);
+            formData.append('authorBio', newBook.authorBio);
             formData.append('pdf', newBookFile);
             if (newCoverFile) formData.append('cover', newCoverFile);
 
@@ -192,7 +194,7 @@ const AdminDashboard = () => {
 
             alert('Book added successfully');
             setShowAddBookModal(false);
-            setNewBook({ title: '', author: '', category: '', selectedTagIds: [] });
+            setNewBook({ title: '', author: '', category: '', description: '', authorBio: '', selectedTagIds: [] });
             setNewBookFile(null);
             setNewCoverFile(null);
             fetchBooks();
@@ -209,6 +211,8 @@ const AdminDashboard = () => {
             formData.append('title', selectedBook.title);
             formData.append('author', selectedBook.author);
             formData.append('category', selectedBook.category);
+            formData.append('description', selectedBook.description || '');
+            formData.append('authorBio', selectedBook.authorBio || '');
             if (editCoverFile) formData.append('cover', editCoverFile);
 
             await axios.put(`http://localhost:5000/api/books/${selectedBook._id}`,
@@ -261,7 +265,7 @@ const AdminDashboard = () => {
         const existingTagIds = Array.isArray(book.tags)
             ? book.tags.map(tag => typeof tag === 'object' ? tag._id : tag)
             : [];
-        setSelectedBook({ ...book, selectedTagIds: existingTagIds });
+        setSelectedBook({...book,selectedTagIds: existingTagIds,description: book.description || '',authorBio: book.authorBio || '',});
         setEditCoverFile(null);
         setShowEditBookModal(true);
     };
@@ -269,6 +273,18 @@ const AdminDashboard = () => {
     const handleLogout = () => {
         logout();
         navigate('/login');
+    };
+    
+    const textareaStyle = {
+        width: '100%',
+        padding: '10px 12px',
+        borderRadius: '8px',
+        border: '1px solid #dee2e6',
+        fontSize: '0.9rem',
+        resize: 'vertical',
+        minHeight: '90px',
+        fontFamily: 'inherit',
+        lineHeight: '1.5',
     };
 
     return (
@@ -501,29 +517,71 @@ const AdminDashboard = () => {
             {/* Add Book Modal */}
             {showAddBookModal && (
                 <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowAddBookModal(false)}>
-                    <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-content">
                             <div className="modal-header" style={{ backgroundColor: '#002147', color: 'white' }}>
                                 <h5 className="modal-title">Add New Book</h5>
                                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowAddBookModal(false)}></button>
                             </div>
-                            <div className="modal-body">
+                            <div className="modal-body" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
                                 <form onSubmit={handleAddBook}>
+
+                                    <p className="fw-bold text-uppercase small mb-2" style={{ color: '#C5A059', letterSpacing: '0.08em' }}>
+                                        Basic Information
+                                    </p>
+                                    <div className="row g-3 mb-3">
+                                        <div className="col-md-6">
+                                            <label className="form-label fw-bold">Title <span className="text-danger">*</span></label>
+                                            <input type="text" className="form-control" value={newBook.title}
+                                                onChange={(e) => setNewBook({ ...newBook, title: e.target.value })} required />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label fw-bold">Author <span className="text-danger">*</span></label>
+                                            <input type="text" className="form-control" value={newBook.author}
+                                                onChange={(e) => setNewBook({ ...newBook, author: e.target.value })} required />
+                                        </div>
+                                        <div className="col-12">
+                                            <label className="form-label fw-bold">Category <span className="text-danger">*</span></label>
+                                            <input type="text" className="form-control" value={newBook.category}
+                                                onChange={(e) => setNewBook({ ...newBook, category: e.target.value })} required />
+                                        </div>
+                                    </div>
+
+                                    <hr className="my-3" />
+                                    
+                                    <p className="fw-bold text-uppercase small mb-2" style={{ color: '#C5A059', letterSpacing: '0.08em' }}>
+                                        Book Details
+                                    </p>
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">Title</label>
-                                        <input type="text" className="form-control" value={newBook.title}
-                                            onChange={(e) => setNewBook({ ...newBook, title: e.target.value })} required />
+                                        <label className="form-label fw-bold">
+                                            Book Description
+                                            <span className="text-muted fw-normal ms-1" style={{ fontSize: '0.8rem' }}>(optional)</span>
+                                        </label>
+                                        <textarea
+                                            className="form-control"
+                                            placeholder="Write a compelling description about the book — what readers will learn, the key themes, and why it's worth reading "
+                                            value={newBook.description}
+                                            onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
+                                            style={textareaStyle}
+                                        />
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">Author</label>
-                                        <input type="text" className="form-control" value={newBook.author}
-                                            onChange={(e) => setNewBook({ ...newBook, author: e.target.value })} required />
+                                        <label className="form-label fw-bold">
+                                            About the Author
+                                            <span className="text-muted fw-normal ms-1" style={{ fontSize: '0.8rem' }}>(optional)</span>
+                                        </label>
+                                        <textarea
+                                            className="form-control"
+                                            placeholder="Share the author's background, expertise, academic achievements, etc"
+                                            value={newBook.authorBio}
+                                            onChange={(e) => setNewBook({ ...newBook, authorBio: e.target.value })}
+                                            style={textareaStyle}
+                                        />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label fw-bold">Category</label>
-                                        <input type="text" className="form-control" value={newBook.category}
-                                            onChange={(e) => setNewBook({ ...newBook, category: e.target.value })} required />
-                                    </div>
+
+                                    <hr className="my-3" />
+                                    <p className="fw-bold text-uppercase small mb-2" style={{ color: '#C5A059', letterSpacing: '0.08em' }}>
+                                    </p>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">Tags</label>
                                         {allTags.length === 0 ? (
@@ -544,23 +602,25 @@ const AdminDashboard = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label fw-bold">Cover Image</label>
-                                        <input type="file" className="form-control" accept="image/*"
-                                            onChange={(e) => setNewCoverFile(e.target.files[0] || null)} />
+                                    <div className="row g-3 mb-3">
+                                        <div className="col-md-6">
+                                            <label className="form-label fw-bold">Cover Image</label>
+                                            <input type="file" className="form-control" accept="image/*"
+                                                onChange={(e) => setNewCoverFile(e.target.files[0] || null)} />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label fw-bold">PDF File <span className="text-danger">*</span></label>
+                                            <input
+                                                type="file"
+                                                className="form-control"
+                                                accept=".pdf"
+                                                onChange={(e) => setNewBookFile(e.target.files[0] || null)}
+                                                required
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label fw-bold">PDF File</label>
-                                        <input
-                                            type="file"
-                                            className="form-control"
-                                            accept=".pdf"
-                                            onChange={(e) => setNewBookFile(e.target.files[0] || null)}
-                                            required
-                                        />
-                                    </div>
-                                    <button type="submit" className="btn text-white w-100" style={{ backgroundColor: '#C5A059' }}>
-                                        Add Book
+                                    <button type="submit" className="btn text-white w-100 py-2 mt-2" style={{ backgroundColor: '#C5A059', fontWeight: 600 }}>
+                                        + Add Book
                                     </button>
                                 </form>
                             </div>
@@ -572,29 +632,72 @@ const AdminDashboard = () => {
             {/* Edit Book Modal */}
             {showEditBookModal && selectedBook && (
                 <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowEditBookModal(false)}>
-                    <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-content">
                             <div className="modal-header" style={{ backgroundColor: '#002147', color: 'white' }}>
-                                <h5 className="modal-title">Edit Book</h5>
+                                <h5 className="modal-title"> Edit Book</h5>
                                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowEditBookModal(false)}></button>
                             </div>
-                            <div className="modal-body">
+                            <div className="modal-body" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
                                 <form onSubmit={handleEditBook}>
+
+                                    <p className="fw-bold text-uppercase small mb-2" style={{ color: '#C5A059', letterSpacing: '0.08em' }}>
+                                        Basic Information
+                                    </p>
+                                    <div className="row g-3 mb-3">
+                                        <div className="col-md-6">
+                                            <label className="form-label fw-bold">Title <span className="text-danger">*</span></label>
+                                            <input type="text" className="form-control" value={selectedBook.title}
+                                                onChange={(e) => setSelectedBook({ ...selectedBook, title: e.target.value })} required />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label fw-bold">Author <span className="text-danger">*</span></label>
+                                            <input type="text" className="form-control" value={selectedBook.author}
+                                                onChange={(e) => setSelectedBook({ ...selectedBook, author: e.target.value })} required />
+                                        </div>
+                                        <div className="col-12">
+                                            <label className="form-label fw-bold">Category <span className="text-danger">*</span></label>
+                                            <input type="text" className="form-control" value={selectedBook.category}
+                                                onChange={(e) => setSelectedBook({ ...selectedBook, category: e.target.value })} required />
+                                        </div>
+                                    </div>
+
+                                    <hr className="my-3" />
+
+                                    <p className="fw-bold text-uppercase small mb-2" style={{ color: '#C5A059', letterSpacing: '0.08em' }}>
+                                        Book Details
+                                    </p>
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">Title</label>
-                                        <input type="text" className="form-control" value={selectedBook.title}
-                                            onChange={(e) => setSelectedBook({ ...selectedBook, title: e.target.value })} required />
+                                        <label className="form-label fw-bold">
+                                            Book Description
+                                            <span className="text-muted fw-normal ms-1" style={{ fontSize: '0.8rem' }}>(optional)</span>
+                                        </label>
+                                        <textarea
+                                            className="form-control"
+                                            placeholder="Write a compelling description about the book..."
+                                            value={selectedBook.description}
+                                            onChange={(e) => setSelectedBook({ ...selectedBook, description: e.target.value })}
+                                            style={textareaStyle}
+                                        />
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label fw-bold">Author</label>
-                                        <input type="text" className="form-control" value={selectedBook.author}
-                                            onChange={(e) => setSelectedBook({ ...selectedBook, author: e.target.value })} required />
+                                        <label className="form-label fw-bold">
+                                            About the Author
+                                            <span className="text-muted fw-normal ms-1" style={{ fontSize: '0.8rem' }}>(optional)</span>
+                                        </label>
+                                        <textarea
+                                            className="form-control"
+                                            placeholder="Share the author's background and expertise..."
+                                            value={selectedBook.authorBio}
+                                            onChange={(e) => setSelectedBook({ ...selectedBook, authorBio: e.target.value })}
+                                            style={textareaStyle}
+                                        />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label fw-bold">Category</label>
-                                        <input type="text" className="form-control" value={selectedBook.category}
-                                            onChange={(e) => setSelectedBook({ ...selectedBook, category: e.target.value })} required />
-                                    </div>
+
+                                    <hr className="my-3" />
+                                    <p className="fw-bold text-uppercase small mb-2" style={{ color: '#C5A059', letterSpacing: '0.08em' }}>
+                                        Tags & Cover
+                                    </p>
                                     <div className="mb-3">
                                         <label className="form-label fw-bold">Tags</label>
                                         {allTags.length === 0 ? (
@@ -625,8 +728,9 @@ const AdminDashboard = () => {
                                             onChange={(e) => setEditCoverFile(e.target.files[0] || null)} />
                                         <small className="text-muted">Leave empty to keep current cover</small>
                                     </div>
-                                    <button type="submit" className="btn text-white w-100" style={{ backgroundColor: '#C5A059' }}>
-                                        Update Book
+
+                                    <button type="submit" className="btn text-white w-100 py-2 mt-2" style={{ backgroundColor: '#C5A059', fontWeight: 600 }}>
+                                        Save Changes
                                     </button>
                                 </form>
                             </div>
@@ -635,8 +739,9 @@ const AdminDashboard = () => {
                 </div>
             )}
 
-                {/* Borrow Requests Tab */}
-                {activeTab === 'borrow' && (
+            {/* Borrow Requests Tab */}
+            {activeTab === 'borrow' && (
+                <div className="flex-grow-1 p-4">
                     <div className="bg-white rounded shadow-sm p-4">
                         <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                             <h2 className="mb-0" style={{ color: '#002147' }}>📦 Borrow Requests</h2>
@@ -699,8 +804,9 @@ const AdminDashboard = () => {
                                 </table>
                             </div>
                         )}
-                    </div>
-                )}
+                         </div>
+                </div>
+            )}
 
         </div>
     );
