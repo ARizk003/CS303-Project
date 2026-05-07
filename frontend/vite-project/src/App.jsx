@@ -1,6 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {Routes, Route} from "react-router-dom";
 import Navbar from './components/Navbar';
+import ChatBot from './components/ChatBot';
 import HomePage from './pages/HomePage';
 import Books from "./pages/Books";
 import Login from './pages/Login';
@@ -10,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from './components/Footer';
 import UserLists from "./pages/UserLists.jsx";
 import ReadBook from "./pages/ReadBooks.jsx"; 
+
 
 function App() {
     return (
@@ -35,7 +37,11 @@ function App() {
                         <UserLists/>
                     </ProtectedRoute>
                 }/>
+
+
             </Routes>
+            <ChatBot />
+
             <Footer/>
         </>
     )
