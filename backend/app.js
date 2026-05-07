@@ -33,6 +33,7 @@ app.use("/api/tags",  require("./routes/tags"));
 app.use("/api/lists", listRoutes);
 app.use("/api/borrow", require("./routes/borrow"));
 app.use("/api/books/:bookId/highlights", require("./routes/highlights"));
+app.use("/api/books/:bookId/comments",   require("./routes/comments"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
