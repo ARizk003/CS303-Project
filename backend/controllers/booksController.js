@@ -103,7 +103,7 @@ exports.addBook = async (req, res) => {
   try {
     if (!req.pdfFile) return res.status(400).json({ msg: "PDF file is required" });
 
-    const { title, author, category, tag_ids } = req.body;
+    const { title, author, category, tag_ids,description, authorBio } = req.body;
     if (!title || !author || !category)
       return res.status(400).json({ msg: "title, author, and category are required" });
 
@@ -111,6 +111,8 @@ exports.addBook = async (req, res) => {
       title,
       author,
       category,
+      description:  description  || "",
+      authorBio:    authorBio    || "",
       pdfPath:    req.pdfFile.path,
       coverImage: req.coverFile ? req.coverFile.path : "",
       addedBy:    req.user.id,
@@ -181,7 +183,8 @@ exports.addToFavorite = async (req, res) => {
 
 exports.updateBook = async (req, res) => {
   try {
-    const updateData = { ...req.body };
+    const { title, author, category, description, authorBio } = req.body;
+    const updateData = { title, author, category, description, authorBio };
     if (req.coverFile) updateData.coverImage = req.coverFile.path;
     await Book.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json({ msg: "Book updated" });
