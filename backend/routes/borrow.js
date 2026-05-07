@@ -12,7 +12,7 @@ router.post('/', auth, async (req, res) => {
             return res.status(400).json({ msg: 'All fields are required' });
         }
 
-        
+
         const existing = await BorrowRequest.findOne({
             user: req.user.id,
             book: bookId,
@@ -48,6 +48,21 @@ router.get('/', auth, async (req, res) => {
 
         const requests = await BorrowRequest.find()
             .populate('user', 'username email')
+            .populate('book', 'title author')
+            .sort({ createdAt: -1 });
+
+        res.json(requests);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: 'Server error' });
+    }
+});
+
+
+router.get('/my-requests', auth, async (req, res) => {
+    try {
+
+        const requests = await BorrowRequest.find({ user: req.user.id })
             .populate('book', 'title author')
             .sort({ createdAt: -1 });
 

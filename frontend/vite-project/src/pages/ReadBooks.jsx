@@ -43,6 +43,9 @@ export default function ReadBook() {
   const [activeTool,  setActiveTool]  = useState("pen");
   const [activeColor, setActiveColor] = useState(COLORS[0].code);
 
+  const [commentText, setCommentText] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
+
   const renderPage = useCallback(async (pageNum) => {
     if (!pdfDocRef.current || !canvasRef.current || !drawingCanvasRef.current) return;
 
@@ -234,6 +237,27 @@ export default function ReadBook() {
     setBorrowLoading(false);
   };
 
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+
+    setCommentLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+          `${API_URL}/api/books/${book._id}/comments`, // Adjust this URL to match your backend endpoint
+          { text: commentText },
+          { headers: { "x-auth-token": token } }
+      );
+      alert("Comment added successfully!");
+      setCommentText("");
+      setMode("choose");
+    } catch (err) {
+      alert(err.response?.data?.msg || "Failed to add comment. Please try again.");
+    }
+    setCommentLoading(false);
+  };
+
 
   if (mode === "choose") {
     const hasDescription = book?.description && book.description.trim().length > 0;
@@ -341,6 +365,16 @@ export default function ReadBook() {
                 <span style={{ fontSize: "0.8rem", opacity: 0.85 }}>Request a physical copy</span>
               </button>
             )}
+
+            {/* ADDED: Add Comment Button */}
+            <div style={{ marginTop: 20 }}>
+              <button
+                  onClick={() => setMode("comment-form")}
+                  style={chooseStyles.commentBtn}
+              >
+                💬 Add a Comment
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -418,6 +452,47 @@ export default function ReadBook() {
           )}
         </div>
       </div>
+    );
+  }if (mode === "comment-form") {
+    return (
+        <div style={chooseStyles.overlay}>
+          <div style={{ ...chooseStyles.card, maxWidth: 520, padding: "40px 36px" }}>
+            <button
+                onClick={() => { setMode("choose"); setCommentText(""); }}
+                style={chooseStyles.closeBtn}
+            >✕</button>
+
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: "2rem", marginBottom: 8 }}>💬</div>
+              <h3 style={{ fontWeight: 700, color: "#1a1a1a", marginBottom: 4 }}>Add a Comment</h3>
+              <p style={{ color: "#888", fontSize: "0.9rem" }}>
+                Share your thoughts on <strong>{book?.title}</strong>
+              </p>
+            </div>
+
+            <form onSubmit={handleAddComment}>
+            <textarea
+                required
+                rows={5}
+                placeholder="Write your review or thoughts here..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                style={{
+                  width: "100%", padding: "14px", borderRadius: 10, border: "1.5px solid #ddd",
+                  fontSize: "0.95rem", outline: "none", boxSizing: "border-box",
+                  background: "#fafafa", marginBottom: 16, resize: "vertical", fontFamily: "inherit"
+                }}
+            />
+              <button
+                  type="submit"
+                  disabled={commentLoading}
+                  style={{ ...chooseStyles.readBtn, flexDirection: "row", gap: 10, justifyContent: "center", padding: "14px", fontSize: "1rem", width: "100%" }}
+              >
+                {commentLoading ? "Submitting..." : "Submit Comment"}
+              </button>
+            </form>
+          </div>
+        </div>
     );
   }
 
@@ -556,6 +631,12 @@ const chooseStyles = {
     background: "linear-gradient(135deg, #f39c12, #e67e22)",
     color: "#fff", cursor: "pointer", fontSize: "0.95rem",
   },
+  commentBtn: {
+    width: "100%", padding: "14px", borderRadius: 16,
+    border: "1px solid #ddd", background: "#f8f9fa",
+    color: "#333", cursor: "pointer", fontSize: "0.95rem", fontWeight: 600,
+    transition: "background 0.2s",
+  }
 };
 
 const s = {

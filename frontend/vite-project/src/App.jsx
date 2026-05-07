@@ -10,7 +10,8 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from './components/Footer';
 import UserLists from "./pages/UserLists.jsx";
-import ReadBook from "./pages/ReadBooks.jsx"; 
+import ReadBook from "./pages/ReadBooks.jsx";
+import UserBorrowRequests from "./pages/UserBorrowRequests.jsx";
 
 
 function App() {
@@ -35,6 +36,12 @@ function App() {
                 <Route path='/my-lists' element={
                     <ProtectedRoute adminOnly={false}>
                         <UserLists/>
+                    </ProtectedRoute>
+                }/>
+
+                <Route path='/my-borrow-req' element={
+                    <ProtectedRoute adminOnly={false}>
+                        <UserBorrowRequests/>
                     </ProtectedRoute>
                 }/>
 
