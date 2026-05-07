@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const GROQ_API_KEY = 'key';
-
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const ChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
