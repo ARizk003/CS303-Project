@@ -263,7 +263,7 @@ export default function ReadBook() {
               </h2>
               <p style={{ color: "#888", fontSize: "0.9rem", marginBottom: 10 }}>by {book?.author}</p>
 
-              //tags
+              
               {Array.isArray(book?.tags) && book.tags.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
                   {book.tags.map((tag, i) => (
@@ -304,7 +304,6 @@ export default function ReadBook() {
             </div>
           )}
 
-          //author bio
           {hasAuthorBio && (
             <div style={{ ...chooseStyles.infoBox, background: "linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%)", borderColor: "#bde0f5" }}>
               <div style={chooseStyles.infoBoxHeader}>
