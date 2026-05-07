@@ -1,7 +1,7 @@
 const express              = require("express");
 const router               = express.Router({ mergeParams: true });
 const auth                 = require("../middleware/auth");
-const highlightsController = require("../controllers/highlightsController");
+const highlightsController = require("../controllers/highlightscontroller");
 
 router.use(auth);
 

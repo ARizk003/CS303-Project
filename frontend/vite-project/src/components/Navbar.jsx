@@ -209,44 +209,54 @@ const Navbar = () => {
                   </li>
               )}
 
-              {/* User Profile / Auth Actions */}
-              {user ? (
-                  <li className="nav-item ms-lg-4 d-flex align-items-center gap-3 bg-white p-2 px-3 shadow-sm rounded-pill" style={{ border: '1px solid #C5A059' }}>
-                    <span className="fw-bold" style={{ color: '#2c3e50' }}>{user.username || user.name}</span>
+{/* User Profile / Auth Actions */}
+{user ? (
+    <li className="nav-item ms-lg-4 d-flex align-items-center gap-3 bg-white p-2 px-3 shadow-sm rounded-pill" style={{ border: '1px solid #C5A059' }}>
+      {/* Profile Link - Clickable username with icon */}
+      <Link 
+        to="/profile" 
+        className="d-flex align-items-center gap-2 text-decoration-none"
+        onClick={() => setIsOpen(false)}
+      >
+        <div className="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+             style={{ width: '28px', height: '28px', backgroundColor: '#f0e3ca !important' }}>
+          <span style={{ fontSize: '0.8rem' }}>👤</span>
+        </div>
+        <span className="fw-bold profile-name">{user.username || user.name}</span>
+      </Link>
 
-                    {isAdmin && (
-                        <Link
-                            to="/admin-dashboard"
-                            className="btn btn-sm btn-dark rounded-pill px-2"
-                            style={{fontSize: '0.7rem'}}
-                        >
-                          ADMIN
-                        </Link>
-                    )}
+      {isAdmin && (
+          <Link
+              to="/admin-dashboard"
+              className="btn btn-sm btn-dark rounded-pill px-2"
+              style={{fontSize: '0.7rem'}}
+          >
+            ADMIN
+          </Link>
+      )}
 
-                    <button
-                        className="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
-                        onClick={() => { logout(); setIsOpen(false); }}
-                        style={{ fontSize: '0.75rem' }}
-                    >
-                      LOGOUT
-                    </button>
-                  </li>
-              ) : (
-                  <div className="d-flex align-items-center ms-lg-4 gap-4 mt-3 mt-lg-0">
-                    <li className="nav-item">
-                      <Link className="nav-link fw-bold sign-in-link" to="/login" onClick={() => setIsOpen(false)}>
-                        Sign In
-                      </Link>
-                    </li>
-                    <li className="nav-item">
-                      <Link className="btn join-btn" to="/Register" onClick={() => setIsOpen(false)}>
-                        Join Learnova
-                      </Link>
-                    </li>
-                  </div>
-              )}
-            </ul>
+      <button
+          className="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+          onClick={() => { logout(); setIsOpen(false); }}
+          style={{ fontSize: '0.75rem' }}
+      >
+        LOGOUT
+      </button>
+    </li>
+) : (
+    <div className="d-flex align-items-center ms-lg-4 gap-4 mt-3 mt-lg-0">
+      <li className="nav-item">
+        <Link className="nav-link fw-bold sign-in-link" to="/login" onClick={() => setIsOpen(false)}>
+          Sign In
+        </Link>
+      </li>
+      <li className="nav-item">
+        <Link className="btn join-btn" to="/Register" onClick={() => setIsOpen(false)}>
+          Join Learnova
+        </Link>
+      </li>
+    </div>
+)}            </ul>
           </div>
         </div>
 
