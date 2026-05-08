@@ -6,8 +6,8 @@ import {
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import PdfViewerModal from '../components/PdfViewerModal';
+import { BASE_URL } from '../config/api';
 
-const BASE_URL = 'http://192.168.1.8:5000';
 
 function StarRating({ bookId, initialRating, initialAvg, initialCount, token, onRated }) {
   const [userRating, setUserRating]   = useState(initialRating);

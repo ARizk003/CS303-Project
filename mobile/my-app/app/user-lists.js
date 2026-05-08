@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { BASE_URL } from '../config/api';
 import {
   View,
   Text,
@@ -26,7 +27,6 @@ const UserLists = () => {
   const { user } = useContext(AuthContext);
   const router = useRouter();
 
-  const BASE_URL = "http://192.168.1.8:5000/api";
   useEffect(() => {
     fetchData();
   }, []);

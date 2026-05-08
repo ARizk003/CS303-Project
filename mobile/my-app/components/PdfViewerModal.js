@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { View, Text, Modal, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import axios from 'axios';
+import { BASE_URL } from '../config/api';
 
-const BASE_URL = 'http://192.168.1.8:5000';
 
 function PdfViewer({ bookId, token }) {
   const [base64, setBase64]         = useState(null);
