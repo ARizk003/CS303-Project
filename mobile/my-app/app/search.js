@@ -180,7 +180,7 @@ export default function Search() {
                   setPdfBook(item);
                 }}
               >
-                <Text style={styles.readBtnText}>Read</Text>
+                <Text style={styles.readBtnText}>Explore Now</Text>
               </TouchableOpacity>
             </View>
           );
@@ -223,6 +223,7 @@ export default function Search() {
       <PdfViewerModal
         book={pdfBook}
         token={user?.token}
+        isAdmin={user?.role === 'admin'}
         onClose={() => setPdfBook(null)}
       />
     </View>
