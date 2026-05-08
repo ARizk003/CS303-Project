@@ -73,7 +73,7 @@ export default function Home() {
           </Text>
           <TouchableOpacity
             style={styles.heroButton}
-            onPress={() => router.push('/books')}
+            onPress={() => router.push('/search')}
           >
             <Text style={styles.heroButtonText}>Get Started</Text>
           </TouchableOpacity>
@@ -133,7 +133,7 @@ export default function Home() {
             <Text style={styles.sectionTitle}>Featured Books</Text>
             <Text style={styles.sectionSubtitle}>Hand-picked reads to get you started</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/books')}>
+          <TouchableOpacity onPress={() => router.push('/search')}>
             <Text style={styles.viewAll}>View All →</Text>
           </TouchableOpacity>
         </View>
@@ -164,7 +164,7 @@ export default function Home() {
         </Text>
         <TouchableOpacity
           style={styles.ctaBtn}
-          onPress={() => router.push('/register')}
+          onPress={() => router.push('/auth/register')}
         >
           <Text style={styles.ctaBtnText}>Create Free Account</Text>
         </TouchableOpacity>
