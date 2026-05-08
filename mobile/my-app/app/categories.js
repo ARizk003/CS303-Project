@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert, Modal,
+  StyleSheet, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -176,10 +176,24 @@ export default function Categories() {
           return (
             <View style={styles.bookCard}>
               <View style={styles.bookHeader}>
-                <Text style={styles.bookTitle}>{item.title}</Text>
-                <Text style={styles.bookAuthor}>{item.author}</Text>
+                {item.coverImage ? (
+                  <Image
+                    source={{ uri: item.coverImage }}
+                    style={styles.coverImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.coverPlaceholder}>
+                    <Text style={styles.coverPlaceholderText}>📖</Text>
+                  </View>
+                )}
+                <View style={styles.bookMeta}>
+                  <Text style={styles.bookTitle} numberOfLines={2}>{item.title}</Text>
+                  <Text style={styles.bookAuthor}>{item.author}</Text>
+                  <TagChips tags={item.tags} />
+                </View>
               </View>
-              <TagChips tags={item.tags} />
+
               <StarRating
                 bookId={item._id}
                 initialRating={r.user_rating}
@@ -238,11 +252,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderRadius: 14, padding: 16,
     marginBottom: 14, borderWidth: 1, borderColor: '#e8dcc8', elevation: 1,
   },
-  bookHeader: { marginBottom: 8 },
-  bookTitle:  { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginBottom: 3 },
-  bookAuthor: { fontSize: 13, color: '#8e7f68' },
+  bookHeader: {
+    flexDirection: 'row', gap: 12, marginBottom: 12,
+  },
+  coverImage: {
+    width: 72, height: 100, borderRadius: 8,
+    backgroundColor: '#f0e8d5',
+  },
+  coverPlaceholder: {
+    width: 72, height: 100, borderRadius: 8,
+    backgroundColor: '#f0e8d5', justifyContent: 'center', alignItems: 'center',
+  },
+  coverPlaceholderText: { fontSize: 28 },
+  bookMeta:   { flex: 1, justifyContent: 'flex-start' },
+  bookTitle:  { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginBottom: 4 },
+  bookAuthor: { fontSize: 13, color: '#8e7f68', marginBottom: 6 },
 
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
   tagChip: { backgroundColor: '#f0e8d5', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
   tagText: { fontSize: 11, color: '#C5A059', fontWeight: '700' },
 
