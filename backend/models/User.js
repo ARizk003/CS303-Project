@@ -31,6 +31,11 @@ const UserSchema = new mongoose.Schema({
     default: Date.now
   },
 
+  image: {
+    type: 'String',
+    default: 'https://ui-avatars.com/api/?name=User&background=C5A059&color=fff&size=120'
+  },
+
   // ahmad: user_list relationship is handled in List.js, no need for lists attribute
 
   resetOtp: {

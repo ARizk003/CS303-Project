@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import StarRating from "../components/StarRating.jsx";
 import { AuthContext } from '../context/AuthContext';
-import TopRatedBadge from "../components/TopRatedBadge.jsx";
+import TopRatedBadge from "../components/Topratedbadge.jsx";
 
 const PDFJS_VERSION = "3.11.174";
 const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;

@@ -85,4 +85,42 @@ const handleUploadError = (err, _req, res, next) => {
   res.status(500).json({ msg: "Cloud upload failed", error: err.message });
 };
 
-module.exports = { upload, uploadBookFiles, handleUploadError, cloudinary };
+const profileStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "E-Library-Profiles",
+    resource_type: "image",
+    public_id: (req, file) => {
+      const safeName = file.originalname.split(".")[0].replace(/[^a-zA-Z0-9._-]/g, "_");
+      return `profile-${req.user.id}-${Date.now()}_${safeName}`;
+    },
+  },
+});
+
+const profileFilter = (_req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files are allowed"), false);
+  }
+};
+
+const profileUpload = multer({
+  storage: profileStorage,
+  fileFilter: profileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
+const uploadProfileImage = (req, res, next) => {
+  profileUpload.single("image")(req, res, (err) => {
+    if (err) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({ msg: "File too large. Max 5MB." });
+      }
+      return res.status(400).json({ msg: err.message });
+    }
+    next();
+  });
+};
+
+module.exports = { upload, uploadBookFiles, handleUploadError, uploadProfileImage, cloudinary };

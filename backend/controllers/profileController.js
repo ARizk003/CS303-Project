@@ -1,6 +1,4 @@
 const User = require("../models/User");
-const fs = require("fs");
-const path = require("path");
 
 exports.getProfile = async (req, res) => {
   try {
@@ -60,20 +58,12 @@ exports.uploadProfileImage = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    // Delete old image if exists
-    if (user.image && user.image.includes('uploads/profiles')) {
-      const oldImagePath = path.resolve(user.image);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
-    }
-
-    const imagePath = req.file.path.replace(/\\/g, "/");
-    user.image = imagePath;
+    // Cloudinary URL from multer-storage-cloudinary
+    user.image = req.file.path;
     await user.save();
 
     res.json({
-      image: imagePath,
+      image: user.image,
       msg: "Profile image updated successfully"
     });
   } catch (err) {
