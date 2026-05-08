@@ -71,7 +71,6 @@ export default function Profile() {
         </View>
       )}
 
-      {/* Menu Options */}
       <View style={styles.menuSection}>
         <Text style={styles.menuTitle}>Account Settings</Text>
 

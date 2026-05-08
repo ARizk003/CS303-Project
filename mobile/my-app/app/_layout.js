@@ -11,7 +11,10 @@ function TabIcon({ icon, label, focused }) {
       <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>
         {icon}
       </Text>
-      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+      <Text
+        numberOfLines={1}
+        style={[styles.tabLabel, focused && styles.tabLabelActive]}
+      >
         {label}
       </Text>
     </View>
@@ -66,7 +69,7 @@ function AppTabs() {
         name="user-lists"
         options={{
           title: "My Lists",
-          href: isAdmin ? null : "/user-lists",
+          href: isAdmin || !user ? null : "/user-lists",
           tabBarIcon: ({ focused }) => (
             <Text
               style={{
@@ -114,8 +117,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   tabItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 75,
+    paddingHorizontal: 2,
   },
   tabIcon: {
     fontSize: 22,
@@ -125,10 +130,11 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   tabLabel: {
-    fontSize: 10,
-    color: '#8e7f68',
+    fontSize: 9,
+    color: "#8e7f68",
     marginTop: 2,
-    fontWeight: '600',
+    fontWeight: "600",
+    textAlign: "center",
   },
   tabLabelActive: {
     color: '#C5A059',
