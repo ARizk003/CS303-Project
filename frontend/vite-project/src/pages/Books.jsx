@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import StarRating from "../components/StarRating.jsx";
-import TopRatedBadge from "../components/TopRatedBadge.jsx";
+import TopRatedBadge from "../components/Topratedbadge.jsx";
 
 const TAG_COLORS = [
     { bg: "#FFE0E0", color: "#c0392b" },

@@ -109,6 +109,7 @@ exports.loginUser = async (req, res) => {
     }
 
     const token = signToken(user);
+    // console.log();
     res.json({ token, user: safeUser(user) });
   } catch (err) {
     console.error(err.message);
@@ -296,6 +297,7 @@ function safeUser(user) {
     id: user.id,
     username: user.username,
     email: user.email,
-    role: user.role
+    role: user.role,
+    image: user.image || "",
   };
 }

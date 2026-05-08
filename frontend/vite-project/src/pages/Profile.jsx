@@ -74,7 +74,7 @@ const Profile = () => {
             setProfile({ ...profile, image: res.data.image });
             if (setUser) setUser({ ...user, image: res.data.image });
         } catch (err) {
-            alert('Failed to upload image');
+            alert('Failed to upload image, ' + err.name + ": " + err.message);
         }
         setUploading(false);
     };
@@ -97,14 +97,14 @@ const Profile = () => {
                         <div className="p-4 text-white text-center" style={{ backgroundColor: '#002147' }}>
                             <div className="mb-3 position-relative d-inline-block">
                                 <img
-                                    src={profile?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || user?.name || 'User')}&background=C5A059&color=fff&size=120`}
-                                    alt="Profile"
-                                    className="rounded-circle border border-3 border-white shadow"
+                                    src={profile?.image }
+                                    alt=""
+                                    className="rounded-circle border border-3 border-white"
                                     style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                                 />
                                 <button
                                     className="btn btn-sm rounded-circle position-absolute bottom-0 end-0 p-1 shadow"
-                                    style={{ backgroundColor: '#C5A059', color: '#fff', width: '30px', height: '30px' }}
+                                    style={{ backgroundColor: '#C5A059', color: '#fff', width: '30px', height: '30px' , position: 'absolute', top:'70px'}}
                                     onClick={() => fileInputRef.current.click()}
                                     disabled={uploading}
                                     title="Change photo"
