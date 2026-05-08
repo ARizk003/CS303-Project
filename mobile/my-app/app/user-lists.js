@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { BASE_URL } from '../config/api';
+import PdfViewerModal from "../components/PdfViewerModal";
 import {
   View,
   Text,
@@ -22,6 +23,7 @@ const UserLists = () => {
   const [activeList, setActiveList] = useState(null);
   const [newListTitle, setNewListTitle] = useState("");
   const [viewMode, setViewMode] = useState("myList");
+  const [pdfBook, setPdfBook] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const { user } = useContext(AuthContext);
@@ -40,11 +42,15 @@ const UserLists = () => {
   const fetchLists = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const res = await axios.get(`${BASE_URL}/lists`, {
+      const res = await axios.get(`${BASE_URL}/api/lists`, {
         headers: { "x-auth-token": token },
       });
       setLists(res.data);
       if (res.data.length > 0 && !activeList) setActiveList(res.data[0]);
+      if (activeList) {
+        const updated = res.data.find((l) => l._id === activeList._id);
+        if (updated) setActiveList(updated);
+      }
     } catch (err) {
       console.error("Error fetching lists:", err);
     }
@@ -52,11 +58,22 @@ const UserLists = () => {
 
   const fetchAllBooks = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/books`);
+      const res = await axios.get(`${BASE_URL}/api/books`);
       setAllBooks(res.data);
     } catch (err) {
       console.error("Error fetching books:", err);
     }
+  };
+
+  const getBooksForActiveList = () => {
+    if (!activeList || !activeList.booksIds) return [];
+
+    return activeList.booksIds
+      .map((bookId) => {
+        const idToFind = typeof bookId === "object" ? bookId._id : bookId;
+        return allBooks.find((book) => book._id === idToFind);
+      })
+      .filter((book) => book !== undefined);
   };
 
   const handleCreateList = async () => {
@@ -64,7 +81,7 @@ const UserLists = () => {
     try {
       const token = await AsyncStorage.getItem("token");
       await axios.post(
-        `${BASE_URL}/lists`,
+        `${BASE_URL}/api/lists`,
         { title: newListTitle },
         { headers: { "x-auth-token": token } },
       );
@@ -81,7 +98,7 @@ const UserLists = () => {
     try {
       const token = await AsyncStorage.getItem("token");
       const res = await axios.patch(
-        `${BASE_URL}/lists/${activeList._id}/add`,
+        `${BASE_URL}/api/lists/${activeList._id}/add`,
         { bookId },
         { headers: { "x-auth-token": token } },
       );
@@ -99,7 +116,7 @@ const UserLists = () => {
     try {
       const token = await AsyncStorage.getItem("token");
       const res = await axios.patch(
-        `${BASE_URL}/lists/${activeList._id}/remove`,
+        `${BASE_URL}/api/lists/${activeList._id}/remove`,
         { bookId },
         { headers: { "x-auth-token": token } },
       );
@@ -118,7 +135,7 @@ const UserLists = () => {
     );
   }
 
-  return (
+    return (
     <View style={styles.container}>
       <View style={styles.sidebarEmulator}>
         <Text style={styles.label}>CREATE NEW LIST</Text>
@@ -176,7 +193,7 @@ const UserLists = () => {
                 : styles.tabBtnText
             }
           >
-            My List Items
+            My Items
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -195,14 +212,13 @@ const UserLists = () => {
         </TouchableOpacity>
       </View>
 
-      {activeList ? (
+      {activeList || viewMode === "browse" ? (
         <View style={styles.contentCard}>
           <Text style={styles.listHeader}>
-            {viewMode === "myList" ? activeList.title : "Browse Library"}
+            {viewMode === "myList" ? activeList?.title : "Browse Library"}
           </Text>
-
           <FlatList
-            data={viewMode === "myList" ? activeList.booksIds : allBooks}
+            data={viewMode === "myList" ? getBooksForActiveList() : allBooks}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
               <View style={styles.bookItem}>
@@ -214,16 +230,11 @@ const UserLists = () => {
                   {viewMode === "myList" ? (
                     <>
                       <TouchableOpacity
-                        onPress={() =>
-                          router.push({
-                            pathname: "/read-book",
-                            params: { bookId: item._id },
-                          })
-                        }
+                        onPress={() => setPdfBook(item)}
                         style={styles.previewBtn}
                       >
                         <Text style={{ color: "#C5A059", fontSize: 12 }}>
-                          Preview
+                          Read
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -240,8 +251,8 @@ const UserLists = () => {
                       onPress={() => addBookToList(item._id)}
                       style={styles.addBtn}
                     >
-                      <Text style={{ color: "white", fontSize: 12 }}>
-                        Add to "{activeList.title}"
+                      <Text style={{ color: "white", fontSize: 11 }}>
+                        Add to List
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -253,11 +264,13 @@ const UserLists = () => {
             }
           />
         </View>
-      ) : (
-        <View style={styles.emptyState}>
-          <Text>Create or select a list to start adding books.</Text>
-        </View>
-      )}
+      ) : null}
+      <PdfViewerModal
+        book={pdfBook}
+        token={user?.token}
+        isAdmin={user?.role === "admin"}
+        onClose={() => setPdfBook(null)}
+      />
     </View>
   );
 };
@@ -315,7 +328,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     borderWeight: 1,
     borderColor: "#333",
-    borderWidth: 1,
     alignItems: "center",
   },
   tabBtnActive: { backgroundColor: "#333" },
@@ -342,8 +354,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
     alignItems: "center",
   },
-  bookTitle: { fontSize: 15, fontWeight: "bold" },
-  bookAuthor: { fontSize: 12, color: "#777" },
+  bookTitle: { fontSize: 14, fontWeight: "bold" },
+  bookAuthor: { fontSize: 11, color: "#777" },
   actionButtons: { flexDirection: "row", gap: 5 },
   previewBtn: {
     padding: 5,
@@ -359,13 +371,6 @@ const styles = StyleSheet.create({
   },
   addBtn: { backgroundColor: "#C5A059", padding: 8, borderRadius: 5 },
   emptyText: { textAlign: "center", marginTop: 40, color: "#999" },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 15,
-  },
 });
 
 export default UserLists;
