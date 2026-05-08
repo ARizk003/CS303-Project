@@ -7,8 +7,12 @@ import ChatbotButton from "../components/ChatbotButton";
 function TabIcon({ icon, label, focused }) {
   return (
     <View style={styles.tabItem}>
-      <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>{icon}</Text>
-      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>{label}</Text>
+      <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>
+        {icon}
+      </Text>
+      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -53,6 +57,23 @@ export default function Layout() {
             options={{
               tabBarIcon: ({ focused }) => (
                 <TabIcon icon="👤" label="Profile" focused={focused} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="user-lists"
+            options={{
+              title: "My Lists",
+              tabBarIcon: ({ focused }) => (
+                <Text
+                  style={{
+                    fontSize: 24,
+                    opacity: focused ? 1 : 0.5,
+                    marginBottom: -5,
+                  }}
+                >
+                  🗒️
+                </Text>
               ),
             }}
           />
