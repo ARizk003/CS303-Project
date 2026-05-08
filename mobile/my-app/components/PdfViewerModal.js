@@ -337,9 +337,71 @@ function BorrowForm({ book, token, onBack }) {
   );
 }
 
+function CommentForm({ book, token, onBack, onSubmitted }) {
+  const [text,    setText]    = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState('');
+
+  const handleSubmit = async () => {
+    if (!text.trim()) { setError('Please write something before submitting.'); return; }
+    setError(''); setLoading(true);
+    try {
+      await axios.post(
+        `${BASE_URL}/api/books/${book._id}/comments`,
+        { text },
+        { headers: { 'x-auth-token': token } }
+      );
+      onSubmitted();
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Failed to add comment. Please try again.');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
+      <Text style={{ fontSize: 36, textAlign: 'center', marginBottom: 8 }}>💬</Text>
+      <Text style={styles.formTitle}>Add a Comment</Text>
+      <Text style={styles.formSub}>
+        Share your thoughts on <Text style={{ fontWeight: '800' }}>{book?.title}</Text>
+      </Text>
+      {!!error && <View style={styles.errorBox}><Text style={styles.errorBoxText}>{error}</Text></View>}
+      <TextInput
+        style={[styles.input, { height: 120, textAlignVertical: 'top', marginBottom: 16 }]}
+        placeholder="Write your review or thoughts here..."
+        placeholderTextColor="#aaa"
+        value={text}
+        onChangeText={setText}
+        multiline
+      />
+      <TouchableOpacity style={[styles.submitBtn, loading && { opacity: 0.6 }]} onPress={handleSubmit} disabled={loading}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Submit Comment</Text>}
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.cancelBtn} onPress={onBack}>
+        <Text style={styles.cancelBtnText}>← Back</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+// ──────────────────────────────────────────────────────────────────────────────
+
 export default function PdfViewerModal({ book, token, onClose, isAdmin = false }) {
   const [mode, setMode] = useState('choose');
+  const [comments, setComments] = useState([]);        
+  const [commentsLoading, setCommentsLoading] = useState(false); 
+
   useEffect(() => { setMode('choose'); }, [book?._id]);
+  useEffect(() => {
+    if (!book?._id) return;
+    setCommentsLoading(true);
+    axios.get(`${BASE_URL}/api/books/${book._id}/comments`, {
+      headers: { 'x-auth-token': token },
+    })
+      .then(res => setComments(res.data))
+      .catch(() => setComments([]))
+      .finally(() => setCommentsLoading(false));
+  }, [book?._id]);
+
   if (!book) return null;
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
@@ -377,11 +439,53 @@ export default function PdfViewerModal({ book, token, onClose, isAdmin = false }
                 <Text style={styles.borrowBtnSub}>Request a physical copy</Text>
               </TouchableOpacity>
             )}
+
+            {!isAdmin && (
+              <TouchableOpacity style={styles.commentBtn} onPress={() => setMode('comment')}>
+                <Text style={styles.commentBtnText}>💬 Add a Comment</Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={styles.commentSection}>
+              <Text style={styles.commentSectionTitle}>Community Comments</Text>
+              {commentsLoading ? (
+                <ActivityIndicator color="#C5A059" style={{ marginTop: 12 }} />
+              ) : comments.length > 0 ? (
+                comments.map((c, i) => (
+                  <View key={c._id || i} style={styles.commentItem}>
+                    <View style={styles.commentHeader}>
+                      <Text style={styles.commentUser}>{c.user?.username || 'Anonymous'}</Text>
+                      <Text style={styles.commentDate}>{new Date(c.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                    <Text style={styles.commentText}>{c.text}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noComments}>No comments yet. Be the first to share your thoughts!</Text>
+              )}
+            </View>
           </ScrollView>
         )}
 
         {mode === 'reading' && <PdfViewer bookId={book._id} token={token} />}
         {mode === 'borrow'  && <BorrowForm book={book} token={token} onBack={() => setMode('choose')} />}
+
+        {mode === 'comment' && (
+          <CommentForm
+            book={book}
+            token={token}
+            onBack={() => setMode('choose')}
+            onSubmitted={() => {
+              // refresh comments then go back
+              axios.get(`${BASE_URL}/api/books/${book._id}/comments`, {
+                headers: { 'x-auth-token': token },
+              })
+                .then(res => setComments(res.data))
+                .catch(() => {})
+                .finally(() => setMode('choose'));
+            }}
+          />
+        )}
       </View>
     </Modal>
   );
@@ -444,6 +548,29 @@ const styles = StyleSheet.create({
   borrowBtn:      { width: '100%', backgroundColor: '#e67e22', borderRadius: 16, padding: 20, alignItems: 'center', gap: 6 },
   borrowBtnTitle: { color: '#fff', fontSize: 17, fontWeight: '800' },
   borrowBtnSub:   { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
+
+  commentBtn: {
+    width: '100%', marginTop: 14, paddingVertical: 14, borderRadius: 16,
+    borderWidth: 1, borderColor: '#e8dcc8', backgroundColor: '#f8f9fa', alignItems: 'center',
+  },
+  commentBtnText: { fontSize: 15, fontWeight: '700', color: '#333' },
+
+  commentSection: {
+    width: '100%', marginTop: 28, borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 18,
+  },
+  commentSectionTitle: { fontSize: 16, fontWeight: '800', color: '#2c3e50', marginBottom: 12 },
+  commentItem: {
+    backgroundColor: '#fff', borderRadius: 12, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: '#e8dcc8',
+  },
+  commentHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  commentUser:   { fontWeight: '700', fontSize: 13, color: '#2c3e50' },
+  commentDate:   { fontSize: 11, color: '#aaa' },
+  commentText:   { fontSize: 13, color: '#555', lineHeight: 20 },
+  noComments: {
+    fontSize: 13, color: '#8e7f68', fontStyle: 'italic',
+    backgroundColor: '#f9f9f9', padding: 14, borderRadius: 10, textAlign: 'center',
+  },
 
   formScroll:   { padding: 24 },
   formTitle:    { fontSize: 22, fontWeight: '900', color: '#002147', textAlign: 'center', marginBottom: 6 },
