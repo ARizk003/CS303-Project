@@ -26,7 +26,7 @@ router.get("/:id/view", auth, booksController.viewBook);
 
 router.post("/", auth, adminOnly, uploadBookFiles, handleUploadError, booksController.addBook);
 router.post("/favorite", auth, booksController.addToFavorite);
-router.put("/:id", auth, adminOnly, booksController.updateBook);
+router.put("/:id", auth, adminOnly, uploadBookFiles, handleUploadError,booksController.updateBook);
 router.delete("/:id", auth, adminOnly, booksController.deleteBook);
 
 router.post("/:id/tags", auth, adminOnly, tagsController.assignTagsToBook);
