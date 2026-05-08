@@ -54,20 +54,22 @@ export default function Profile() {
         </View>
       </View>
 
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>12</Text>
-          <Text style={styles.statLabel}>Finished</Text>
+      {user.role !== "admin" && (
+        <View style={styles.statsContainer}>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statLabel}>Finished</Text>
+          </View>
+          <View style={[styles.statBox, styles.statBorder]}>
+            <Text style={styles.statNumber}>5</Text>
+            <Text style={styles.statLabel}>Reading</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>28</Text>
+            <Text style={styles.statLabel}>Wishlist</Text>
+          </View>
         </View>
-        <View style={[styles.statBox, styles.statBorder]}>
-          <Text style={styles.statNumber}>5</Text>
-          <Text style={styles.statLabel}>Reading</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>28</Text>
-          <Text style={styles.statLabel}>Wishlist</Text>
-        </View>
-      </View>
+      )}
 
       {/* Menu Options */}
       <View style={styles.menuSection}>
@@ -77,12 +79,20 @@ export default function Profile() {
           <Text style={styles.menuItemText}>👤 Edit Profile</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push("/user-lists")}
-        >
-          <Text style={styles.menuItemText}>📚 My Reading Lists</Text>
-        </TouchableOpacity>
+        {user.role !== "admin" && (
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push("/user-lists")}
+          >
+            <Text style={styles.menuItemText}>📚 My Reading Lists</Text>
+          </TouchableOpacity>
+        )}
+
+        {user.role !== "admin" && (
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuItemText}>🔔 Notifications</Text>
+          </TouchableOpacity>
+        )}
 
         {user.role === "admin" && (
           <TouchableOpacity
@@ -92,10 +102,6 @@ export default function Profile() {
             <Text style={styles.adminItemText}>🛠️ Admin Control Panel</Text>
           </TouchableOpacity>
         )}
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuItemText}>🔔 Notifications</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.menuItem, styles.logoutItem]}
