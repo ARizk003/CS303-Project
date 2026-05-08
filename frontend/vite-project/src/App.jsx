@@ -11,8 +11,8 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from './components/Footer';
 import UserLists from "./pages/UserLists.jsx";
 import ReadBook from "./pages/ReadBooks.jsx";
+import Profile from './pages/Profile';
 import UserBorrowRequests from "./pages/UserBorrowRequests.jsx";
-
 
 function App() {
     return (
@@ -44,8 +44,7 @@ function App() {
                         <UserBorrowRequests/>
                     </ProtectedRoute>
                 }/>
-
-
+               <Route path="/profile" element={<Profile />} />
             </Routes>
             <ChatBot />
 

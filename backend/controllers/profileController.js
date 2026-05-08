@@ -1,0 +1,83 @@
+const User = require("../models/User");
+const fs = require("fs");
+const path = require("path");
+
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      image: user.image || "",
+      createdAt: user.createdAt
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const updateData = {};
+    
+    if (name !== undefined) {
+      if (!name.trim()) return res.status(400).json({ msg: "Name cannot be empty" });
+      updateData.name = name.trim();
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updateData },
+      { new: true }
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      image: user.image || "",
+      createdAt: user.createdAt
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+exports.uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ msg: "No image file provided" });
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    // Delete old image if exists
+    if (user.image && user.image.includes('uploads/profiles')) {
+      const oldImagePath = path.resolve(user.image);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    const imagePath = req.file.path.replace(/\\/g, "/");
+    user.image = imagePath;
+    await user.save();
+
+    res.json({
+      image: imagePath,
+      msg: "Profile image updated successfully"
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
