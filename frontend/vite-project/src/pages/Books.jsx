@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import StarRating from "../components/StarRating.jsx";
+import TopRatedBadge from "../components/TopRatedBadge.jsx";
 
 const TAG_COLORS = [
     { bg: "#FFE0E0", color: "#c0392b" },
@@ -36,6 +37,11 @@ const BookRatingDisplay = ({ bookId }) => {
         <div className="mb-2">
             <StarRating initialRating={stats.average_rating} readonly={true} />
             <small className="text-muted">({stats.ratings_count} reviews)</small>
+            {stats.average_rating > 0 && (
+                <div className="mt-1">
+                    <TopRatedBadge rating={stats.average_rating} />
+                </div>
+            )}
         </div>
     );
 };
