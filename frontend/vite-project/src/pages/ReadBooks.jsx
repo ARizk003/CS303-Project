@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import StarRating from "../components/StarRating.jsx";
 import { AuthContext } from '../context/AuthContext';
+import TopRatedBadge from "../components/TopRatedBadge.jsx";
 
 const PDFJS_VERSION = "3.11.174";
 const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
@@ -23,6 +24,7 @@ export default function ReadBook() {
   const isAdmin = user?.role === 'admin';
 
   const [currentRating, setCurrentRating] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
   const [mode, setMode] = useState("choose");
   const [borrowData, setBorrowData] = useState({ fullName: "", phone: "", address: "", nationalId: "" });
   const [borrowLoading, setBorrowLoading] = useState(false);
@@ -114,6 +116,7 @@ export default function ReadBook() {
         headers: { 'x-auth-token': token }
       }).then(res => {
         if (res.data.user_rating) setCurrentRating(res.data.user_rating);
+        if (res.data.average_rating) setAverageRating(res.data.average_rating);
       });
     }
   }, [book?._id]);
@@ -286,6 +289,8 @@ export default function ReadBook() {
                 {book?.title}
               </h2>
               <p style={{ color: "#888", fontSize: "0.9rem", marginBottom: 10 }}>by {book?.author}</p>
+
+              <TopRatedBadge rating={averageRating} style={{ marginBottom: 10 }} />
 
               
               {Array.isArray(book?.tags) && book.tags.length > 0 && (
