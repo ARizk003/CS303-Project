@@ -27,13 +27,13 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use('/api/auth',  authRoutes);
+app.use("/api/users/profile", require("./routes/profile"));
 app.use("/api/users", usersRoutes);
 app.use("/api/books", require("./routes/books"));
 app.use("/api/tags",  require("./routes/tags"));
 app.use("/api/lists", listRoutes);
 app.use("/api/borrow", require("./routes/borrow"));
 app.use("/api/books/:bookId/highlights", require("./routes/highlights"));
-app.use("/api/users/profile", require("./routes/profile"));
 app.use("/api/books/:bookId/comments",   require("./routes/comments"));
 
 const PORT = process.env.PORT || 5000;
