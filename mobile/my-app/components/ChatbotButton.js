@@ -1,87 +1,155 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, TouchableOpacity, Text, StyleSheet,
-  Modal, SafeAreaView, TouchableWithoutFeedback,
+  View, Text, StyleSheet, TouchableOpacity, Modal,
+  SafeAreaView, TextInput, FlatList, ActivityIndicator,
+  KeyboardAvoidingView, Platform
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import axios from 'axios';
+import { BASE_URL, GROQ_API_KEY } from '../config/api';
 
 export default function ChatbotButton() {
-  const [visible, setVisible] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'Hello! I am your Library Assistant. I can help you find books, summarize them, and answer your questions!' }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [books, setBooks] = useState([]);
+  
+  const flatListRef = useRef(null);
+
+  useEffect(() => {
+    axios.get(`${BASE_URL}/api/books`)
+      .then(res => setBooks(res.data))
+      .catch(() => {});
+  }, []);
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+
+    const userMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const booksContext = books.length > 0
+        ? `Available books:\n${books.map(b => `- "${b.title}" by ${b.author}`).join('\n')}`
+        : 'No books available currently.';
+
+      const systemPrompt = {
+        role: 'system',
+        content: `You are a helpful library assistant. ${booksContext} 
+        Respond in the same language the user uses (Arabic or English). 
+        If the user speaks Arabic, reply in professional and friendly Arabic.`
+      };
+
+      const cleanedHistory = messages.map(({ role, content }) => ({ role, content }));
+
+      const res = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+        model: 'llama-3.3-70b-versatile',
+        messages: [systemPrompt, ...cleanedHistory, userMessage],
+        max_tokens: 500
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`
+        }
+      });
+
+      const reply = res.data.choices?.[0]?.message?.content || 'Empty response';
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error' }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={[
+      styles.bubble,
+      item.role === 'user' ? styles.userBubble : styles.assistantBubble
+    ]}>
+      <Text style={{ color: item.role === 'user' ? 'white' : 'black', fontSize: 14 }}>
+        {item.content}
+      </Text>
+    </View>
+  );
 
   return (
-    <>
-      <TouchableOpacity style={styles.fab} onPress={() => setVisible(true)}>
-        <Text style={styles.fabIcon}>💬</Text>
+    <View>
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={() => setIsOpen(true)}
+      >
+        <Text style={{ fontSize: 24, color: 'white' }}>💬</Text>
       </TouchableOpacity>
 
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={() => setVisible(false)}>
-        <TouchableWithoutFeedback onPress={() => setVisible(false)}>
-          <View style={styles.overlay} />
-        </TouchableWithoutFeedback>
-
-        <SafeAreaView style={styles.sheet}>
+      <Modal visible={isOpen} animationType="slide">
+        <SafeAreaView style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>LEARN<Text style={styles.headerOva}>OVA</Text> Assistant</Text>
-            <TouchableOpacity onPress={() => setVisible(false)} style={styles.closeBtn}>
-              <Text style={styles.closeText}>✕</Text>
+            <Text style={styles.headerTitle}>📚 Library Assistant</Text>
+            <TouchableOpacity onPress={() => setIsOpen(false)}>
+              <Text style={{ color: 'white', fontSize: 20 }}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          <WebView
-            source={{ uri: 'https://www.chatbase.co/chatbot-iframe/1z-0HVnhilJA-GBj4C31a' }}
-            style={styles.webview}
-            startInLoadingState
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(_, i) => i.toString()}
+            renderItem={renderItem}
+            contentContainerStyle={{ padding: 15 }}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
           />
+
+          {loading && <Text style={styles.typing}>Typing...</Text>}
+
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          >
+            <View style={styles.inputArea}>
+              <TextInput
+                style={styles.input}
+                value={input}
+                onChangeText={setInput}
+                placeholder="Type a message..."
+              />
+              <TouchableOpacity style={styles.sendBtn} onPress={sendMessage}>
+                {loading ? <ActivityIndicator color="white" /> : <Text style={{ color: 'white' }}>Send</Text>}
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   fab: {
-    position: 'absolute',
-    bottom: 90,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#C5A059',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#C5A059',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 999,
+    position: 'absolute', bottom: 90, right: 20,
+    width: 55, height: 55, borderRadius: 27.5,
+    backgroundColor: '#002147', justifyContent: 'center', alignItems: 'center',
+    elevation: 5
   },
-  fabIcon: { fontSize: 24 },
-
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  sheet: {
-    height: '75%',
-    backgroundColor: '#fdfaf6',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: 'hidden',
-  },
+  container: { flex: 1, backgroundColor: 'white' },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: '#fdfaf6',
-    borderBottomWidth: 2,
-    borderBottomColor: '#C5A059',
+    backgroundColor: '#002147', padding: 15,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
   },
-  headerTitle: { fontSize: 18, fontWeight: '900', color: '#2c3e50' },
-  headerOva: { color: '#C5A059' },
-  closeBtn: { padding: 4 },
-  closeText: { fontSize: 16, color: '#8e7f68', fontWeight: '700' },
-  webview: { flex: 1 },
+  headerTitle: { color: 'white', fontWeight: 'bold' },
+  bubble: {
+    padding: 10, borderRadius: 12, marginBottom: 10, maxWidth: '80%'
+  },
+  userBubble: { alignSelf: 'flex-end', backgroundColor: '#002147' },
+  assistantBubble: { alignSelf: 'flex-start', backgroundColor: '#f0f0f0' },
+  typing: { paddingLeft: 15, color: '#999', fontSize: 12, marginBottom: 5 },
+  inputArea: {
+    flexDirection: 'row', padding: 10, borderTopWidth: 1, borderColor: '#eee', backgroundColor: 'white'
+  },
+  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 8, marginRight: 5, color: 'black' },
+  sendBtn: { backgroundColor: '#C5A059', padding: 10, borderRadius: 5, justifyContent: 'center' }
 });
