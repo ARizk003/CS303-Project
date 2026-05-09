@@ -110,7 +110,14 @@ const Navbar = () => {
       >
         <div className="rounded-circle bg-light d-flex align-items-center justify-content-center" 
              style={{ width: '28px', height: '28px', backgroundColor: '#f0e3ca !important' }}>
-          <span style={{ fontSize: '0.8rem' }}>👤</span>
+          <span style={{ fontSize: '0.8rem' }}>
+                                <img
+                                    src={user?.image }
+                                    alt=""
+                                    className="rounded-circle border border-3 border-white"
+                                    style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                />
+          </span>
         </div>
         <span className="fw-bold profile-name">{user.username || user.name}</span>
       </Link>

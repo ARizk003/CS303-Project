@@ -58,7 +58,6 @@ exports.uploadProfileImage = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    // Cloudinary URL from multer-storage-cloudinary
     user.image = req.file.path;
     await user.save();
 

@@ -23,7 +23,7 @@ const Profile = () => {
             return;
         }
         fetchProfile();
-    }, [user]);
+    }, [user?.id]);
 
     const fetchProfile = async () => {
         try {
@@ -32,6 +32,17 @@ const Profile = () => {
             });
             setProfile(res.data);
             setNewName(res.data.name || user?.name || '');
+
+        // if (setUser) {
+        //     console.log("setUser true");
+        // }
+            const updatedUser = { 
+                ...user, 
+                name: res.data.name,
+                image: res.data.image 
+            };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
         } catch (err) {
             console.error('Error fetching profile:', err);
         }
@@ -72,7 +83,10 @@ const Profile = () => {
                 }
             );
             setProfile({ ...profile, image: res.data.image });
-            if (setUser) setUser({ ...user, image: res.data.image });
+                const updatedUser = { ...user, image: res.data.image };
+                console.log(updatedUser);
+                setUser(updatedUser);
+                localStorage.setItem('user', JSON.stringify(updatedUser));
         } catch (err) {
             alert('Failed to upload image, ' + err.name + ": " + err.message);
         }
