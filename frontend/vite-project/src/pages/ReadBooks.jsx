@@ -4,10 +4,10 @@ import axios from "axios";
 import StarRating from "../components/StarRating.jsx";
 import { AuthContext } from '../context/AuthContext';
 import TopRatedBadge from "../components/Topratedbadge.jsx";
+import API_URL from "../config/api";
 
 const PDFJS_VERSION = "3.11.174";
 const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
-const API_URL = "http://localhost:5000";
 
 const COLORS = [
   { id: "yellow", code: "rgba(255, 255, 0, 0.4)" },
@@ -47,6 +47,9 @@ export default function ReadBook() {
 
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
+
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   const renderPage = useCallback(async (pageNum) => {
     if (!pdfDocRef.current || !canvasRef.current || !drawingCanvasRef.current) return;
@@ -255,11 +258,33 @@ export default function ReadBook() {
       alert("Comment added successfully!");
       setCommentText("");
       setMode("choose");
+      fetchComments();
     } catch (err) {
       alert(err.response?.data?.msg || "Failed to add comment. Please try again.");
     }
     setCommentLoading(false);
   };
+
+  const fetchComments = async () => {
+    if (!book?._id) return;
+    setCommentsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      // Adjust the URL if your GET route is different
+      const res = await axios.get(`${API_URL}/api/books/${book._id}/comments`, {
+        headers: { "x-auth-token": token }
+      });
+      setComments(res.data);
+    } catch (err) {
+      console.error("Failed to fetch comments", err);
+    }
+    setCommentsLoading(false);
+  };
+
+  // Trigger fetchComments when the book ID is available
+  useEffect(() => {
+    fetchComments();
+  }, [book?._id]);
 
 
   if (mode === "choose") {
@@ -381,7 +406,36 @@ export default function ReadBook() {
               </button>
             </div>
           </div>
+          {/* --- COMMUNITY COMMENTS SECTION --- */}
+          <div style={{ marginTop: 30, borderTop: "1px solid #eee", paddingTop: 20 }}>
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#1a1a1a", marginBottom: 12 }}>
+              Community Comments
+            </h3>
+
+            {commentsLoading ? (
+                <p style={{ color: "#888", fontSize: "0.9rem" }}>Loading comments...</p>
+            ) : comments.length > 0 ? (
+                <div style={chooseStyles.commentsContainer}>
+                  {comments.map((c, index) => (
+                      <div key={c._id || index} style={chooseStyles.commentItem}>
+                        <div style={chooseStyles.commentHeader}>
+                          <strong>{c.user?.username || "Anonymous"}</strong>
+                          <span style={chooseStyles.commentDate}>
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </span>
+                        </div>
+                        <p style={chooseStyles.commentText}>{c.text}</p>
+                      </div>
+                  ))}
+                </div>
+            ) : (
+                <p style={{ color: "#888", fontSize: "0.9rem", fontStyle: "italic", background: "#f9f9f9", padding: 12, borderRadius: 8 }}>
+                  No comments yet. Be the first to share your thoughts!
+                </p>
+            )}
+          </div>
         </div>
+
       </div>
     );
   }

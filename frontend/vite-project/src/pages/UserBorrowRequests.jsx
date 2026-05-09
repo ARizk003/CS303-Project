@@ -1,5 +1,6 @@
 import React, { useState, useEffect} from 'react';
 import axios from 'axios';
+import API_URL from '../config/api';
 
 
 const UserBorrowRequests = () => {
@@ -18,7 +19,7 @@ const UserBorrowRequests = () => {
     const fetchBorrowRequests = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/borrow/my-requests', {
+            const res = await axios.get(`${API_URL}/api/borrow/my-requests`, {
                 headers: { 'x-auth-token': token }
             });
             // This now successfully updates the state

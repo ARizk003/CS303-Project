@@ -72,9 +72,19 @@ export const AuthProvider = ({ children }) => {
       return { success: false, msg: err.response?.data?.msg || 'Signup failed' };
     }
   };
+  const updateProfileImage = async (imageUrl) => {
+    try {
+      const updatedUser = { ...user, image: imageUrl };
+      const { token, ...userData } = updatedUser;
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      setUser(updatedUser);
+    } catch (error) {
+      console.error('Error updating profile image:', error);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, signup }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, signup, updateProfileImage  }}>
       {children}
     </AuthContext.Provider>
   );

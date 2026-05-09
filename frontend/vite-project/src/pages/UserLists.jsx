@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../config/api';
 
 const UserLists = () => {
     const [lists, setLists] = useState([]);
@@ -13,7 +14,7 @@ const UserLists = () => {
 
     const { user } = useContext(AuthContext);
     const token = localStorage.getItem('token');
-    const API_URL = 'http://localhost:5000/api/lists';
+    const API_URL_LISTS = `${API_URL}/api/lists`;
 
     useEffect(() => {
         fetchLists();
@@ -22,7 +23,7 @@ const UserLists = () => {
 
     const fetchLists = async () => {
         try {
-            const res = await axios.get(API_URL, { headers: { 'x-auth-token': token } });
+            const res = await axios.get(API_URL_LISTS, { headers: { 'x-auth-token': token } });
             setLists(res.data);
             if (res.data.length > 0 && !activeList) setActiveList(res.data[0]);
         } catch (err) { console.error(err); }
@@ -30,7 +31,7 @@ const UserLists = () => {
 
     const fetchAllBooks = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/books');
+            const res = await axios.get(`${API_URL}/api/books`);
             setAllBooks(res.data);
         } catch (err) { console.error(err); }
     };
@@ -39,7 +40,7 @@ const UserLists = () => {
         e.preventDefault();
         if (!newListTitle.trim()) return;
         try {
-            await axios.post(API_URL, { title: newListTitle }, { headers: { 'x-auth-token': token } });
+            await axios.post(API_URL_LISTS, { title: newListTitle }, { headers: { 'x-auth-token': token } });
             setNewListTitle('');
             fetchLists();
         } catch (err) { alert('Failed to create list'); }
@@ -48,7 +49,7 @@ const UserLists = () => {
     const addBookToList = async (bookId) => {
         if (!activeList) return alert("Please select or create a list first!");
         try {
-            const res = await axios.patch(`${API_URL}/${activeList._id}/add`,
+            const res = await axios.patch(`${API_URL_LISTS}/${activeList._id}/add`,
                 { bookId },
                 { headers: { 'x-auth-token': token } }
             );
@@ -68,7 +69,7 @@ const UserLists = () => {
 
     const removeBook = async (bookId) => {
         try {
-            const res = await axios.patch(`${API_URL}/${activeList._id}/remove`,
+            const res = await axios.patch(`${API_URL_LISTS}/${activeList._id}/remove`,
                 { bookId },
                 { headers: { 'x-auth-token': token } }
             );

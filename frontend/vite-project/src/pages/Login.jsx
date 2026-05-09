@@ -4,6 +4,7 @@ import axios from "axios";
 import { AuthContext } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
+import API_URL from '../config/api';
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+            const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
             login(res.data.token, res.data.user);
             if (res.data.user && res.data.user.role === 'admin') {
                 navigate("/admin-dashboard");
@@ -34,7 +35,7 @@ function Login() {
         const googleEmail = decoded.email;
         const googleName = decoded.name;
         try {
-            const res = await axios.post("http://localhost:5000/api/auth/google-login", { 
+            const res = await axios.post(`${API_URL}/api/auth/google-login`, { 
                 email: googleEmail, 
                 username: googleName 
             });

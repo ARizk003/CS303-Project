@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import API_URL from '../config/api';
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const ChatBot = () => {
@@ -20,7 +21,7 @@ const ChatBot = () => {
     }, [messages]);
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/books')
+        fetch(`${API_URL}/api/books`)
             .then(res => res.json())
             .then(data => setBooks(data))
             .catch(() => {});

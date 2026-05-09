@@ -4,6 +4,7 @@ import axios from "axios";
 import { AuthContext } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
+import API_URL from '../config/api';
 
 function Signup() {
     const [name, setName] = useState('');
@@ -33,7 +34,7 @@ function Signup() {
 
         setLoadingOtp(true);
         try {
-            await axios.post("http://localhost:5000/api/auth/send-otp", { email });
+            await axios.post(`${API_URL}/api/auth/send-otp`, { email });
             setShowOtp(true);
             setIsGoogleSignup(false);
             alert("OTP sent to your email!");
@@ -52,11 +53,11 @@ function Signup() {
         }
         try {
             
-            await axios.post("http://localhost:5000/api/auth/verify-otp", { email, otp });
+            await axios.post(`${API_URL}/api/auth/verify-otp`, { email, otp });
 
             if (isGoogleSignup) {
                 
-                const res = await axios.post("http://localhost:5000/api/auth/register", {
+                const res = await axios.post(`${API_URL}/api/auth/register`, {
                     username: name,
                     email,
                     password: Math.random().toString(36).slice(-8) 
@@ -87,7 +88,7 @@ function Signup() {
         setIsGoogleSignup(true);
 
         try {
-            await axios.post("http://localhost:5000/api/auth/send-otp", { email: googleEmail });
+            await axios.post(`${API_URL}/api/auth/send-otp`, { email: googleEmail });
             setShowOtp(true);
             alert("OTP sent to your email!");
         } catch (err) {
