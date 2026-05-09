@@ -83,9 +83,11 @@ const Profile = () => {
                 }
             );
             setProfile({ ...profile, image: res.data.image });
-                const updatedUser = { ...user, image: res.data.image };
-                console.log(updatedUser);
+            const updatedUser = { ...user, image: res.data.image };
+            if (setUser){
+                // console.log(updatedUser);
                 setUser(updatedUser);
+            }
                 localStorage.setItem('user', JSON.stringify(updatedUser));
         } catch (err) {
             alert('Failed to upload image, ' + err.name + ": " + err.message);
