@@ -22,30 +22,7 @@ export default function Profile() {
   const [deleting, setDeleting]   = useState(false);
   const router = useRouter();
 
-  if (!user) {
-    return (
-      <View style={styles.guestContainer}>
-        <Text style={styles.emoji}>📖</Text>
-        <Text style={styles.guestTitle}>Join LearnNova</Text>
-        <Text style={styles.guestSubtitle}>
-          Sign in to track your reading progress and manage your lists.
-        </Text>
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          onPress={() => router.push("/auth/login")}
-        >
-          <Text style={styles.btnText}>Sign In</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.secondaryBtn}
-          onPress={() => router.push("/auth/register")}
-        >
-          <Text style={styles.secondaryBtnText}>Create Account</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
+ 
   const handleImageUpload = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -59,7 +36,7 @@ export default function Profile() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.7, 
+      quality: 0.7,
     });
     if (result.canceled) return;
 
@@ -105,7 +82,6 @@ export default function Profile() {
   }, [user, updateProfileImage]);
 
   const handleDeleteImage = useCallback(() => {
-    if (user.role !== 'admin') return;
 
     if (!user.image || user.image === FALLBACK_AVATAR) {
       Alert.alert('No Photo', 'You have no custom profile photo to delete.');
@@ -141,6 +117,29 @@ export default function Profile() {
       ],
     );
   }, [user, updateProfileImage]);
+  if (!user) {
+    return (
+      <View style={styles.guestContainer}>
+        <Text style={styles.emoji}>📖</Text>
+        <Text style={styles.guestTitle}>Join LearnNova</Text>
+        <Text style={styles.guestSubtitle}>
+          Sign in to track your reading progress and manage your lists.
+        </Text>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={() => router.push("/auth/login")}
+        >
+          <Text style={styles.btnText}>Sign In</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryBtn}
+          onPress={() => router.push("/auth/register")}
+        >
+          <Text style={styles.secondaryBtnText}>Create Account</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const avatarSource = user.image
     ? { uri: user.image }
@@ -167,7 +166,7 @@ export default function Profile() {
               <Text style={styles.cameraIcon}>📷</Text>
             )}
           </View>
-          {user.role === 'admin' && user.image && user.image !== FALLBACK_AVATAR && (
+          {user.image && user.image !== FALLBACK_AVATAR && (
             <TouchableOpacity
               style={styles.deleteOverlay}
               onPress={handleDeleteImage}
@@ -295,6 +294,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 15,
     position: 'relative',
+  },
+  avatarWrapper: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 15,
+    position: 'relative', 
   },
   avatarImage: {
     width: 100,
