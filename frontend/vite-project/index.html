@@ -2,15 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy"
-      content="default-src 'self';
-       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com/gsi/client https://cdnjs.cloudflare.com; connect-src 'self' http://localhost:5000 ws://localhost:* https://api.groq.com https://accounts.google.com/gsi/ https://cdnjs.cloudflare.com blob: https://generativelanguage.googleapis.com;
-       frame-src https://accounts.google.com/http://localhost:5000;
-       worker-src blob:;
-       style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style;
-       font-src 'self' data:;
-       img-src 'self' data: blob: https://res.cloudinary.com https://covers.openlibrary.org https://archive.org https://*.archive.org https:;"
-    />
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self';
+   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com/gsi/client https://cdnjs.cloudflare.com;
+   connect-src 'self' http://localhost:5000 https://cs303-project-production.up.railway.app ws://localhost:* https://api.groq.com https://accounts.google.com/gsi/ https://cdnjs.cloudflare.com blob: https://generativelanguage.googleapis.com;
+   frame-src https://accounts.google.com/ http://localhost:5000 https://cs303-project-production.up.railway.app;
+   worker-src blob:;
+   style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style;
+   font-src 'self' data:;
+   img-src 'self' data: blob: https://res.cloudinary.com https://covers.openlibrary.org https://archive.org https://*.archive.org https:;"
+/>
 
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

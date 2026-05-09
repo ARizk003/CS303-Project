@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import StarRating from "../components/StarRating.jsx";
 import TopRatedBadge from "../components/Topratedbadge.jsx";
+import API_URL from '../config/api';
 
 const TAG_COLORS = [
     { bg: "#FFE0E0", color: "#c0392b" },
@@ -24,7 +25,7 @@ const BookRatingDisplay = ({ bookId }) => {
     useEffect(() => {
         const fetchRating = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/api/books/${bookId}/rating`);
+            const res = await axios.get(`${API_URL}/api/books/${bookId}/rating`);
                 setStats(res.data);
             } catch (err) {
                 console.error("Error fetching rating", err);
@@ -61,7 +62,7 @@ function Books() {
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
 
-    const API_URL = "http://localhost:5000";
+    const API_URL_BOOKS = API_URL;
 
 
 

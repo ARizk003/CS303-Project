@@ -1,5 +1,6 @@
 import axios from "axios";
 import {createContext, useState, useEffect} from "react";
+import API_URL from "../config/api";
 
 export const AuthContext = createContext()
 
@@ -64,7 +65,7 @@ export const AuthProvider = ({children}) => {
             return;
         } else {
             try {
-                const res = await axios.post('http://localhost:5000/api/auth/register', {username, email, password})
+                const res = await axios.post(`${API_URL}/api/auth/register`, {username, email, password})
                 login(res.data.token, res.data.user)
                 return {success: true}
             } catch (err) {

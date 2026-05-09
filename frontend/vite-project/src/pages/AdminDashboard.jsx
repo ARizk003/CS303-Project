@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../config/api';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('users');
@@ -40,7 +41,7 @@ const AdminDashboard = () => {
     const fetchBorrowRequests = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/borrow', {
+            const res = await axios.get(`${API_URL}/api/borrow`, {
                 headers: { 'x-auth-token': token }
             });
             setBorrowRequests(res.data);
@@ -52,7 +53,7 @@ const AdminDashboard = () => {
 
     const updateBorrowStatus = async (id, status) => {
         try {
-            await axios.patch(`http://localhost:5000/api/borrow/${id}`, { status }, {
+            await axios.patch(`${API_URL}/api/borrow/${id}`, { status }, {
                 headers: { 'x-auth-token': token }
             });
             setBorrowRequests(prev => prev.map(r => r._id === id ? { ...r, status } : r));
@@ -63,7 +64,7 @@ const AdminDashboard = () => {
 
     const fetchAllTags = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/tags');
+            const res = await axios.get(`${API_URL}/api/tags`);
             setAllTags(res.data);
         } catch (err) {
             console.error('Failed to fetch tags', err);
@@ -73,7 +74,7 @@ const AdminDashboard = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/users', {
+            const res = await axios.get(`${API_URL}/api/users`, {
                 headers: { 'x-auth-token': token }
             });
             setUsers(res.data);
@@ -87,7 +88,7 @@ const AdminDashboard = () => {
     const fetchBooks = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/books');
+            const res = await axios.get(`${API_URL}/api/books`);
             setBooks(res.data);
         } catch (err) {
             console.error(err);
@@ -101,7 +102,7 @@ const AdminDashboard = () => {
         e.preventDefault();
         if (!newTagName.trim()) return;
         try {
-            await axios.post('http://localhost:5000/api/tags',
+            await axios.post(`${API_URL}/api/tags`,
                 { name: newTagName.trim() },
                 { headers: { 'x-auth-token': token } }
             );
@@ -120,7 +121,7 @@ const AdminDashboard = () => {
     const handleDeleteTag = async (tagId) => {
         if (!window.confirm('Delete this tag?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/tags/${tagId}`, {
+            await axios.delete(`${API_URL}/api/tags/${tagId}`, {
                 headers: { 'x-auth-token': token }
             });
             fetchAllTags();
@@ -132,7 +133,7 @@ const AdminDashboard = () => {
     const handleEditTag = async (tagId) => {
         if (!editTagName.trim()) return;
         try {
-            await axios.put(`http://localhost:5000/api/tags/${tagId}`,
+            await axios.put(`${API_URL}/api/tags/${tagId}`,
                 { name: editTagName.trim() },
                 { headers: { 'x-auth-token': token } }
             );
@@ -178,7 +179,7 @@ const AdminDashboard = () => {
             formData.append('pdf', newBookFile);
             if (newCoverFile) formData.append('cover', newCoverFile);
 
-            const res = await axios.post('http://localhost:5000/api/books',
+            const res = await axios.post(`${API_URL}/api/books`,
                 formData,
                 { headers: { 'x-auth-token': token, 'Content-Type': 'multipart/form-data' } }
             );
@@ -186,7 +187,7 @@ const AdminDashboard = () => {
 
             if (newBook.selectedTagIds.length > 0) {
                 await axios.post(
-                    `http://localhost:5000/api/books/${newBookId}/tags`,
+                    `${API_URL}/api/books/${newBookId}/tags`,
                     { tag_ids: newBook.selectedTagIds },
                     { headers: { 'x-auth-token': token } }
                 );
@@ -215,13 +216,13 @@ const AdminDashboard = () => {
             formData.append('authorBio', selectedBook.authorBio || '');
             if (editCoverFile) formData.append('cover', editCoverFile);
 
-            await axios.put(`http://localhost:5000/api/books/${selectedBook._id}`,
+            await axios.put(`${API_URL}/api/books/${selectedBook._id}`,
                 formData,
                 { headers: { 'x-auth-token': token, 'Content-Type': 'multipart/form-data' } }
             );
 
             await axios.post(
-                `http://localhost:5000/api/books/${selectedBook._id}/tags`,
+                `${API_URL}/api/books/${selectedBook._id}/tags`,
                 { tag_ids: selectedBook.selectedTagIds },
                 { headers: { 'x-auth-token': token } }
             );
@@ -240,7 +241,7 @@ const AdminDashboard = () => {
     const deleteUser = async (userId) => {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/users/${userId}`, {
+            await axios.delete(`${API_URL}/api/users/${userId}`, {
                 headers: { 'x-auth-token': token }
             });
             fetchUsers();
@@ -252,7 +253,7 @@ const AdminDashboard = () => {
     const deleteBook = async (bookId) => {
         if (!window.confirm('Are you sure you want to delete this book?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/books/${bookId}`, {
+            await axios.delete(`${API_URL}/api/books/${bookId}`, {
                 headers: { 'x-auth-token': token }
             });
             fetchBooks();

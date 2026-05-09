@@ -4,10 +4,10 @@ import axios from "axios";
 import StarRating from "../components/StarRating.jsx";
 import { AuthContext } from '../context/AuthContext';
 import TopRatedBadge from "../components/Topratedbadge.jsx";
+import API_URL from "../config/api";
 
 const PDFJS_VERSION = "3.11.174";
 const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
-const API_URL = "http://localhost:5000";
 
 const COLORS = [
   { id: "yellow", code: "rgba(255, 255, 0, 0.4)" },

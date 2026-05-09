@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../config/api';
 
 const Profile = () => {
     const { user, setUser } = useContext(AuthContext);
@@ -15,7 +16,6 @@ const Profile = () => {
     const navigate = useNavigate();
     
     const token = localStorage.getItem('token');
-    const API_URL = 'http://localhost:5000';
 
     useEffect(() => {
         if (!user) {
