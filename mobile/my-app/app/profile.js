@@ -74,9 +74,7 @@ export default function Profile() {
       <View style={styles.menuSection}>
         <Text style={styles.menuTitle}>Account Settings</Text>
 
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuItemText}>👤 Edit Profile</Text>
-        </TouchableOpacity>
+
 
         {user.role !== "admin" && (
           <TouchableOpacity
@@ -87,11 +85,7 @@ export default function Profile() {
           </TouchableOpacity>
         )}
 
-        {user.role !== "admin" && (
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>🔔 Notifications</Text>
-          </TouchableOpacity>
-        )}
+
 
         {user.role === "admin" && (
           <TouchableOpacity
