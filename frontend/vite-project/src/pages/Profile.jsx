@@ -33,9 +33,7 @@ const Profile = () => {
             setProfile(res.data);
             setNewName(res.data.name || user?.name || '');
 
-        // if (setUser) {
-        //     console.log("setUser true");
-        // }
+            if(setUser){
             const updatedUser = { 
                 ...user, 
                 name: res.data.name,
@@ -43,6 +41,7 @@ const Profile = () => {
             };
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
+            }
         } catch (err) {
             console.error('Error fetching profile:', err);
         }
@@ -58,6 +57,7 @@ const Profile = () => {
             );
             setProfile(res.data);
             if (setUser) setUser({ ...user, name: newName });
+            // localStorage.setItem('user.username', res.data.name);
             setEditName(false);
         } catch (err) {
             alert('Failed to update name');
@@ -164,7 +164,7 @@ const Profile = () => {
                                 </div>
                             ) : (
                                 <div className="d-flex align-items-center justify-content-center gap-2">
-                                    <h4 className="fw-bold mb-0" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                    <h4 className="fw-bold mb-0" /* style={{ fontFamily: "'Playfair Display', serif" }} */>
                                         {profile?.name || user?.name}
                                     </h4>
                                     <button

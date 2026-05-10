@@ -7,11 +7,11 @@ exports.getProfile = async (req, res) => {
 
     res.json({
       _id: user._id,
-      name: user.name,
+      name: user.username,
       email: user.email,
       role: user.role,
       image: user.image || "",
-      createdAt: user.createdAt
+      createdAt: user.date
     });
   } catch (err) {
     console.error(err.message);
@@ -26,24 +26,24 @@ exports.updateProfile = async (req, res) => {
     
     if (name !== undefined) {
       if (!name.trim()) return res.status(400).json({ msg: "Name cannot be empty" });
-      updateData.name = name.trim();
+      updateData.username = name.trim();
     }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { $set: updateData },
-      { new: true }
+      { new: true , runValidators: true }
     ).select("-password");
 
     if (!user) return res.status(404).json({ msg: "User not found" });
 
     res.json({
       _id: user._id,
-      name: user.name,
+      name: user.username,
       email: user.email,
       role: user.role,
       image: user.image || "",
-      createdAt: user.createdAt
+      createdAt: user.date
     });
   } catch (err) {
     console.error(err.message);
