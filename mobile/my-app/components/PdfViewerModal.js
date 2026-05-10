@@ -77,13 +77,14 @@ function PdfViewer({ bookId, token }) {
   );
 
   const html = `<!DOCTYPE html><html><head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{background:#fdfaf6}
-    .page-wrap{position:relative;display:block;margin-bottom:8px;touch-action:none}
+    html,body{background:#fdfaf6;-webkit-overflow-scrolling:touch;overflow-y:auto}
+    .page-wrap{position:relative;display:block;margin-bottom:8px;touch-action:pan-y}
     canvas.pdf-canvas{display:block;width:100%!important;height:auto!important}
-    canvas.draw-canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important;touch-action:none}
+    canvas.draw-canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important;touch-action:pan-y}
+    canvas.draw-canvas.is-drawing{touch-action:none}
     #loading{color:#8e7f68;text-align:center;padding:40px 20px;font-family:sans-serif}
     #error{color:#c0392b;text-align:center;padding:40px 20px;font-family:sans-serif;display:none}
   </style>
@@ -155,30 +156,72 @@ function PdfViewer({ bookId, token }) {
       }
     }
     function attachDrawing(canvas) {
+      let touchStartX = 0, touchStartY = 0, gestureDecided = false, gestureIsScroll = false;
+
       function start(e) {
-        e.preventDefault(); isDrawing = true; currentCanvas = canvas;
-        const pos = getPos(canvas, e);
-        const ctx = canvas.getContext('2d');
-        applyTool(ctx); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        gestureDecided  = false;
+        gestureIsScroll = false;
+        currentCanvas = canvas;
       }
       function move(e) {
-        if (!isDrawing || currentCanvas !== canvas) return;
-        e.preventDefault();
+        if (currentCanvas !== canvas) return;
+
+        const dx = e.touches[0].clientX - touchStartX;
+        const dy = e.touches[0].clientY - touchStartY;
+
+        if (!gestureDecided) {
+          const absDx = Math.abs(dx), absDy = Math.abs(dy);
+          if (absDx < 6 && absDy < 6) return;
+
+          gestureDecided = true;
+          if (absDy > absDx) {
+            gestureIsScroll = true;
+            return;
+          }
+          gestureIsScroll = false;
+          isDrawing = true;
+          canvas.classList.add('is-drawing');
+          const pos = getPos(canvas, { touches: [{ clientX: touchStartX, clientY: touchStartY }] });
+          const ctx = canvas.getContext('2d');
+          applyTool(ctx); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+        }
+
+        if (gestureIsScroll) return;
+        if (!isDrawing) return;
+
+        e.preventDefault(); 
         const pos = getPos(canvas, e);
         const ctx = canvas.getContext('2d');
         applyTool(ctx); ctx.lineTo(pos.x, pos.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
       }
       function stop(e) {
-        if (!isDrawing || currentCanvas !== canvas) return;
-        e.preventDefault(); isDrawing = false;
-        canvas.getContext('2d').beginPath();
+        if (currentCanvas !== canvas) return;
+        if (isDrawing) {
+          isDrawing = false;
+          canvas.classList.remove('is-drawing');
+          canvas.getContext('2d').beginPath();
+        }
+        gestureDecided = false; gestureIsScroll = false;
       }
-      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchstart', start, { passive: true });
       canvas.addEventListener('touchmove',  move,  { passive: false });
-      canvas.addEventListener('touchend',   stop,  { passive: false });
-      canvas.addEventListener('mousedown',  start);
-      canvas.addEventListener('mousemove',  move);
+      canvas.addEventListener('touchend',   stop,  { passive: true });
+      canvas.addEventListener('mousedown',  (e) => {
+        isDrawing = true; currentCanvas = canvas;
+        const pos = getPos(canvas, e);
+        const ctx = canvas.getContext('2d');
+        applyTool(ctx); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+      });
+      canvas.addEventListener('mousemove',  (e) => {
+        if (!isDrawing || currentCanvas !== canvas) return;
+        const pos = getPos(canvas, e);
+        const ctx = canvas.getContext('2d');
+        applyTool(ctx); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+      });
       canvas.addEventListener('mouseup',    stop);
       canvas.addEventListener('mouseleave', stop);
     }
@@ -252,6 +295,8 @@ function PdfViewer({ bookId, token }) {
         originWhitelist={['*']}
         javaScriptEnabled
         mixedContentMode="always"
+        scrollEnabled
+        nestedScrollEnabled
       />
       {webLoading && (
         <View style={styles.overlay}>
