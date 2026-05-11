@@ -14,16 +14,15 @@ const COLORS = [
 ];
 
 function PdfViewer({ bookId, token }) {
-  const [base64, setBase64]         = useState(null);
-  const [fetchErr, setFetchErr]     = useState(null);
-  const [webLoading, setWebLoading] = useState(true);
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [activeTool,  setActiveTool]  = useState('pen');
   const [activeColor, setActiveColor] = useState(COLORS[0].hex);
+  const [webReady, setWebReady] = useState(false);
   const webRef = useRef(null);
 
-  const sendCmd = (cmd) => webRef.current?.postMessage(JSON.stringify(cmd));
+  const pdfUrl = `${BASE_URL}/api/books/${bookId}/view`;
 
+  const sendCmd = (cmd) => webRef.current?.postMessage(JSON.stringify(cmd));
   const selectTool  = (tool)  => { setActiveTool(tool);   sendCmd({ type: 'SET_TOOL',  tool });  };
   const selectColor = (color) => { setActiveColor(color); sendCmd({ type: 'SET_COLOR', color }); };
   const clearPage   = () => {
@@ -33,49 +32,8 @@ function PdfViewer({ bookId, token }) {
     ]);
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/api/books/${bookId}/view`, {
-          headers: { 'x-auth-token': token },
-          responseType: 'arraybuffer',
-          timeout: 60000,
-        });
-        if (cancelled) return;
-
-        const bytes = new Uint8Array(res.data);
-        let bin = '';
-        const chunk = 8192;
-        for (let i = 0; i < bytes.length; i += chunk) {
-          bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
-           }
-              setBase64(btoa(bin));
-      } catch (err) {
-        if (!cancelled) {
-          const msg = err.response?.data?.msg || err.message || 'Failed to fetch PDF';
-          setFetchErr(msg);
-        }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [bookId, token]);
-
-  if (fetchErr) return (
-    <View style={styles.center}>
-      <Text style={styles.errorIcon}>📄</Text>
-      <Text style={styles.errorText}>Could not load book</Text>
-      <Text style={styles.errorSub}>{fetchErr}</Text>
-    </View>
-  );
-
-  if (!base64) return (
-    <View style={styles.center}>
-      <ActivityIndicator size="large" color="#C5A059" />
-      <Text style={styles.loadingText}>Fetching PDF…</Text>
-    </View>
-  );
-
+  // HTML that fetches the PDF via fetch() with the auth header, then renders with PDF.js
+  // This avoids downloading the whole file in React Native — the WebView handles it internally
   const html = `<!DOCTYPE html><html><head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
@@ -85,84 +43,86 @@ function PdfViewer({ bookId, token }) {
     canvas.pdf-canvas{display:block;width:100%!important;height:auto!important}
     canvas.draw-canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important;touch-action:pan-y}
     canvas.draw-canvas.is-drawing{touch-action:none}
-    #loading{color:#8e7f68;text-align:center;padding:40px 20px;font-family:sans-serif}
+    #status{color:#8e7f68;text-align:center;padding:40px 20px;font-family:sans-serif;font-size:15px}
     #error{color:#c0392b;text-align:center;padding:40px 20px;font-family:sans-serif;display:none}
   </style>
   </head><body>
-  <div id="loading">Rendering pages…</div>
+  <div id="status">Loading PDF…</div>
   <div id="viewer"></div>
   <div id="error"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    let activeTool = 'pen', activeColor = '#FFD700', isDrawing = false, currentCanvas = null, isDrawingMode = false;
-    const b64 = ${JSON.stringify(base64)};
-    const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    const viewer = document.getElementById('viewer');
-    const loadingEl = document.getElementById('loading');
-    const errorEl = document.getElementById('error');
-function attachDrawing(canvas) {
-      function start(e) {
-        if (!isDrawingMode) return;
-        e.preventDefault(); isDrawing = true; currentCanvas = canvas;
-        const pos = getPos(canvas, e);
-        const ctx = canvas.getContext('2d');
-        applyTool(ctx); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
-      }
-      function move(e) {
-        if (!isDrawingMode || !isDrawing || currentCanvas !== canvas) return;
-        e.preventDefault();
-        const pos = getPos(canvas, e);
-        const ctx = canvas.getContext('2d');
-        applyTool(ctx); ctx.lineTo(pos.x, pos.y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
-      }
-      function stop(e) {
-        if (!isDrawingMode || !isDrawing || currentCanvas !== canvas) return;
-        e.preventDefault(); isDrawing = false;
-        canvas.getContext('2d').beginPath();
-      }
-    pdfjsLib.getDocument({ data: bytes }).promise
+
+    const PDF_URL   = ${JSON.stringify(pdfUrl)};
+    const AUTH_TOKEN = ${JSON.stringify(token)};
+
+    let activeTool = 'pen', activeColor = '#FFD700', isDrawing = false,
+        currentCanvas = null, isDrawingMode = false;
+
+    const statusEl = document.getElementById('status');
+    const errorEl  = document.getElementById('error');
+    const viewer   = document.getElementById('viewer');
+
+    // Fetch PDF with auth header inside the WebView — no base64, no arraybuffer in RN
+    fetch(PDF_URL, { headers: { 'x-auth-token': AUTH_TOKEN } })
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.arrayBuffer();
+      })
+      .then(buffer => {
+        statusEl.textContent = 'Rendering…';
+        return pdfjsLib.getDocument({ data: buffer }).promise;
+      })
       .then(pdf => {
-        loadingEl.style.display = 'none';
-        const renders = [];
+        statusEl.style.display = 'none';
+        // Render pages one by one — show first page as soon as it's ready
+        let chain = Promise.resolve();
         for (let i = 1; i <= pdf.numPages; i++) {
-          renders.push((function(pageNum) {
-            return pdf.getPage(pageNum).then(page => {
-              const scale = window.innerWidth / page.getViewport({ scale: 1 }).width;
-              const vp = page.getViewport({ scale });
-              const wrap = document.createElement('div');
-              wrap.className = 'page-wrap';
-              wrap.style.height = vp.height + 'px';
-              const pdfC = document.createElement('canvas');
-              pdfC.className = 'pdf-canvas';
-              pdfC.width = vp.width; pdfC.height = vp.height;
-              const drawC = document.createElement('canvas');
-              drawC.className = 'draw-canvas';
-              drawC.width = vp.width; drawC.height = vp.height;
-              wrap.appendChild(pdfC); wrap.appendChild(drawC);
-              viewer.appendChild(wrap);
-              attachDrawing(drawC);
-              return page.render({ canvasContext: pdfC.getContext('2d'), viewport: vp }).promise;
-            });
-          })(i));
+          chain = chain.then(() => renderPage(pdf, i));
         }
-        return renders.reduce((p, r) => p.then(() => r), Promise.resolve());
+        return chain;
       })
       .catch(err => {
-        loadingEl.style.display = 'none';
+        statusEl.style.display = 'none';
         errorEl.style.display = 'block';
-        errorEl.textContent = 'Render error: ' + (err.message || err);
+        errorEl.textContent = 'Could not load PDF: ' + (err.message || err);
       });
+
+    function renderPage(pdf, pageNum) {
+      return pdf.getPage(pageNum).then(page => {
+        const scale = window.innerWidth / page.getViewport({ scale: 1 }).width;
+        const vp    = page.getViewport({ scale });
+
+        const wrap  = document.createElement('div');
+        wrap.className = 'page-wrap';
+        wrap.style.height = vp.height + 'px';
+
+        const pdfC  = document.createElement('canvas');
+        pdfC.className = 'pdf-canvas';
+        pdfC.width = vp.width; pdfC.height = vp.height;
+
+        const drawC = document.createElement('canvas');
+        drawC.className = 'draw-canvas';
+        drawC.width = vp.width; drawC.height = vp.height;
+
+        wrap.appendChild(pdfC);
+        wrap.appendChild(drawC);
+        viewer.appendChild(wrap);
+
+        attachDrawing(drawC);
+        return page.render({ canvasContext: pdfC.getContext('2d'), viewport: vp }).promise;
+      });
+    }
+
     function getPos(c, e) {
       const rect = c.getBoundingClientRect();
       const scaleX = c.width / rect.width, scaleY = c.height / rect.height;
       const src = e.touches ? e.touches[0] : e;
       return { x: (src.clientX - rect.left) * scaleX, y: (src.clientY - rect.top) * scaleY };
     }
+
     function applyTool(ctx) {
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       if (activeTool === 'pen') {
@@ -176,76 +136,60 @@ function attachDrawing(canvas) {
         ctx.lineWidth = 36; ctx.globalAlpha = 1;
       }
     }
+
     function attachDrawing(canvas) {
       let touchStartX = 0, touchStartY = 0, gestureDecided = false, gestureIsScroll = false;
 
       function start(e) {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
-        gestureDecided  = false;
-        gestureIsScroll = false;
+        gestureDecided = false; gestureIsScroll = false;
         currentCanvas = canvas;
       }
       function move(e) {
         if (currentCanvas !== canvas) return;
-
         const dx = e.touches[0].clientX - touchStartX;
         const dy = e.touches[0].clientY - touchStartY;
-
         if (!gestureDecided) {
-          const absDx = Math.abs(dx), absDy = Math.abs(dy);
-          if (absDx < 6 && absDy < 6) return;
-
+          if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
           gestureDecided = true;
-          if (absDy > absDx) {
-            gestureIsScroll = true;
-            return;
-          }
-          gestureIsScroll = false;
-          isDrawing = true;
+          if (Math.abs(dy) > Math.abs(dx)) { gestureIsScroll = true; return; }
+          gestureIsScroll = false; isDrawing = true;
           canvas.classList.add('is-drawing');
           const pos = getPos(canvas, { touches: [{ clientX: touchStartX, clientY: touchStartY }] });
           const ctx = canvas.getContext('2d');
           applyTool(ctx); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
         }
-
-        if (gestureIsScroll) return;
-        if (!isDrawing) return;
-
-        e.preventDefault(); 
+        if (gestureIsScroll || !isDrawing) return;
+        e.preventDefault();
         const pos = getPos(canvas, e);
         const ctx = canvas.getContext('2d');
         applyTool(ctx); ctx.lineTo(pos.x, pos.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
       }
-      function stop(e) {
+      function stop() {
         if (currentCanvas !== canvas) return;
-        if (isDrawing) {
-          isDrawing = false;
-          canvas.classList.remove('is-drawing');
-          canvas.getContext('2d').beginPath();
-        }
+        if (isDrawing) { isDrawing = false; canvas.classList.remove('is-drawing'); canvas.getContext('2d').beginPath(); }
         gestureDecided = false; gestureIsScroll = false;
       }
       canvas.addEventListener('touchstart', start, { passive: true });
       canvas.addEventListener('touchmove',  move,  { passive: false });
       canvas.addEventListener('touchend',   stop,  { passive: true });
-      canvas.addEventListener('mousedown',  (e) => {
+      canvas.addEventListener('mousedown', (e) => {
         isDrawing = true; currentCanvas = canvas;
-        const pos = getPos(canvas, e);
-        const ctx = canvas.getContext('2d');
+        const pos = getPos(canvas, e); const ctx = canvas.getContext('2d');
         applyTool(ctx); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
       });
-      canvas.addEventListener('mousemove',  (e) => {
+      canvas.addEventListener('mousemove', (e) => {
         if (!isDrawing || currentCanvas !== canvas) return;
-        const pos = getPos(canvas, e);
-        const ctx = canvas.getContext('2d');
+        const pos = getPos(canvas, e); const ctx = canvas.getContext('2d');
         applyTool(ctx); ctx.lineTo(pos.x, pos.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
       });
       canvas.addEventListener('mouseup',    stop);
       canvas.addEventListener('mouseleave', stop);
     }
+
     document.addEventListener('message', handle);
     window.addEventListener('message',   handle);
     function handle(e) {
@@ -253,11 +197,7 @@ function attachDrawing(canvas) {
         const cmd = JSON.parse(e.data);
         if (cmd.type === 'SET_TOOL')  activeTool  = cmd.tool;
         if (cmd.type === 'SET_COLOR') activeColor = cmd.color;
-        if (cmd.type === 'TOGGLE_MODE') {
-          isDrawingMode = cmd.isDrawing;
-          if (isDrawingMode) document.body.classList.add('drawing-mode');
-          else document.body.classList.remove('drawing-mode');
-        }
+        if (cmd.type === 'TOGGLE_MODE') isDrawingMode = cmd.isDrawing;
         if (cmd.type === 'CLEAR') {
           document.querySelectorAll('.draw-canvas').forEach(c => {
             const ctx = c.getContext('2d');
@@ -284,7 +224,7 @@ function attachDrawing(canvas) {
           <Text style={[styles.toolToggleText, toolbarVisible && { color: '#fff' }]}>
             ✏️ {toolbarVisible ? 'Hide Tools' : 'Drawing Tools'}
           </Text>
-          </TouchableOpacity>
+        </TouchableOpacity>
       </View>
 
       {toolbarVisible && (
@@ -321,17 +261,17 @@ function attachDrawing(canvas) {
         ref={webRef}
         source={{ html }}
         style={{ flex: 1 }}
-        onLoadEnd={() => setWebLoading(false)}
+        onLoadEnd={() => setWebReady(true)}
         originWhitelist={['*']}
         javaScriptEnabled
         mixedContentMode="always"
         scrollEnabled
         nestedScrollEnabled
       />
-      {webLoading && (
+      {!webReady && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#C5A059" />
-          <Text style={styles.loadingText}>Rendering PDF…</Text>
+          <Text style={styles.loadingText}>Opening book…</Text>
         </View>
       )}
     </View>
