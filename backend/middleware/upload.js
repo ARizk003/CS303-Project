@@ -105,13 +105,21 @@ const profileFilter = (_req, file, cb) => {
   }
 };
 
+// multer function is the middleware designed for handling multipart/form-data
+// , the specific POST request type for file uploads
+// multer checks the uploaded file against inlcuded filters, then adds file object to the req object
+// , containing the file and metadata, then passed to controller for further processing (e.g. saving file path to database)
 const profileUpload = multer({
+  // storage: cloudinary
   storage: profileStorage,
+  // verifying that the file is image
   fileFilter: profileFilter,
+  // size limit
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
 const uploadProfileImage = (req, res, next) => {
+  // calls the multer function and passing the image in "image" field to it
   profileUpload.single("image")(req, res, (err) => {
     if (err) {
       if (err.code === "LIMIT_FILE_SIZE") {

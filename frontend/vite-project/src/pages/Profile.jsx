@@ -4,6 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
+import {toast} from "react-hot-toast";
 
 const Profile = () => {
     const { user, setUser } = useContext(AuthContext);
@@ -33,9 +34,7 @@ const Profile = () => {
             setProfile(res.data);
             setNewName(res.data.name || user?.name || '');
 
-        // if (setUser) {
-        //     console.log("setUser true");
-        // }
+            if(setUser){
             const updatedUser = { 
                 ...user, 
                 name: res.data.name,
@@ -43,6 +42,7 @@ const Profile = () => {
             };
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
+            }
         } catch (err) {
             console.error('Error fetching profile:', err);
         }
@@ -58,16 +58,20 @@ const Profile = () => {
             );
             setProfile(res.data);
             if (setUser) setUser({ ...user, name: newName });
+            localStorage.setItem('user', user ? JSON.stringify({ ...user, username: newName}) : null);
             setEditName(false);
         } catch (err) {
-            alert('Failed to update name');
+            toast.error('Failed to update name');
         }
     };
 
     const handleImageUpload = async (e) => {
+        // FileList object provided by DOM API when user selects file(s) from file input
         const file = e.target.files[0];
         if (!file) return;
 
+        // FormData object is an object for storing form data including files
+        // , that is to be sent via HTTP requests
         const formData = new FormData();
         formData.append('image', file);
 
@@ -78,14 +82,16 @@ const Profile = () => {
                 { 
                     headers: { 
                         'x-auth-token': token,
+                        // a specific POST request for file uploads
                         'Content-Type': 'multipart/form-data'
                     } 
                 }
             );
             setProfile({ ...profile, image: res.data.image });
-                const updatedUser = { ...user, image: res.data.image };
-                console.log(updatedUser);
+            const updatedUser = { ...user, image: res.data.image };
+            if (setUser){
                 setUser(updatedUser);
+            }
                 localStorage.setItem('user', JSON.stringify(updatedUser));
         } catch (err) {
             alert('Failed to upload image, ' + err.name + ": " + err.message);
@@ -114,21 +120,26 @@ const Profile = () => {
                                     src={profile?.image }
                                     alt=""
                                     className="rounded-circle border border-3 border-white"
-                                    style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                                    style={{ width: '120px', height: '120px', objectFit: 'cover' }}
                                 />
                                 <button
                                     className="btn btn-sm rounded-circle position-absolute bottom-0 end-0 p-1 shadow"
-                                    style={{ backgroundColor: '#C5A059', color: '#fff', width: '30px', height: '30px' , position: 'absolute', top:'70px'}}
+                                    style={{ backgroundColor: '#C5A059', color: '#fff', width: '30px', height: '30px' , top:'80px'}}
+                                    // open the hidden input onclick
                                     onClick={() => fileInputRef.current.click()}
+                                    // disables clicking while uploading
                                     disabled={uploading}
                                     title="Change photo"
                                 >
                                     {uploading ? '...' : '📷'}
                                 </button>
+                                {/* when clicked, system's file selection dialog is opened */}
                                 <input
                                     type="file"
                                     ref={fileInputRef}
+                                    // on inputing image: upload
                                     onChange={handleImageUpload}
+                                    // filters file selection to images only
                                     accept="image/*"
                                     style={{ display: 'none' }}
                                 />
@@ -162,7 +173,7 @@ const Profile = () => {
                                 </div>
                             ) : (
                                 <div className="d-flex align-items-center justify-content-center gap-2">
-                                    <h4 className="fw-bold mb-0" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                    <h4 className="fw-bold mb-0" /* style={{ fontFamily: "'Playfair Display', serif" }} */>
                                         {profile?.name || user?.name}
                                     </h4>
                                     <button

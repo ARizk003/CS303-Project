@@ -3,6 +3,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
+import {toast} from "react-hot-toast";
 
 const UserLists = () => {
     const [lists, setLists] = useState([]);
@@ -43,11 +44,11 @@ const UserLists = () => {
             await axios.post(API_URL_LISTS, { title: newListTitle }, { headers: { 'x-auth-token': token } });
             setNewListTitle('');
             fetchLists();
-        } catch (err) { alert('Failed to create list'); }
+        } catch (err) { toast.error('Failed to create list'); }
     };
 
     const addBookToList = async (bookId) => {
-        if (!activeList) return alert("Please select or create a list first!");
+        if (!activeList) return toast("Please select or create a list first!");
         try {
             const res = await axios.patch(`${API_URL_LISTS}/${activeList._id}/add`,
                 { bookId },
@@ -55,8 +56,8 @@ const UserLists = () => {
             );
             setActiveList(res.data.list);
             setLists(lists.map(l => l._id === activeList._id ? res.data.list : l));
-            alert("Book added!");
-        } catch (err) { alert("Book already in list or error occurred"); }
+            toast.success("Book added!");
+        } catch (err) { toast("Book already in list or error occurred"); }
     };
 
     const openBook = (book) => {
@@ -75,7 +76,7 @@ const UserLists = () => {
             );
             setActiveList(res.data.list);
             setLists(lists.map(l => l._id === activeList._id ? res.data.list : l));
-        } catch (err) { alert('Error removing book'); }
+        } catch (err) { toast.error('Error removing book'); }
     };
 
     return (
