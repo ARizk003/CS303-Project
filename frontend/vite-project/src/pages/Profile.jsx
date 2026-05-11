@@ -4,6 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
+import {toast} from "react-hot-toast";
 
 const Profile = () => {
     const { user, setUser } = useContext(AuthContext);
@@ -60,7 +61,7 @@ const Profile = () => {
             localStorage.setItem('user', user ? JSON.stringify({ ...user, username: newName}) : null);
             setEditName(false);
         } catch (err) {
-            alert('Failed to update name');
+            toast.error('Failed to update name');
         }
     };
 

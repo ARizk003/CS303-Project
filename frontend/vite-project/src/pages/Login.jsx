@@ -5,6 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import API_URL from '../config/api';
+import {toast} from "react-hot-toast";
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -22,11 +23,14 @@ function Login() {
             login(res.data.token, res.data.user);
             if (res.data.user && res.data.user.role === 'admin') {
                 navigate("/admin-dashboard");
+
             } else {
                 navigate("/");
             }
+            toast.success(`Welcome ${res.data.user.username}`);
         } catch (err) {
-            alert(err.response?.data?.msg || "Login failed");
+            // alert(err.response?.data?.msg || "Login failed");
+            toast.error( 'Login failed');
         }
     };
 
@@ -42,7 +46,8 @@ function Login() {
             login(res.data.token, res.data.user);
             navigate("/");
         } catch (err) {
-            alert(err.response?.data?.msg || "Google Login Failed");
+            // alert(err.response?.data?.msg || "Google Login Failed");
+            toast.error(err.response?.data?.msg || "Google Login Failed");
         }
     };
 
@@ -109,7 +114,7 @@ function Login() {
                             <div className="d-flex justify-content-center">
                                 <GoogleLogin 
                                     onSuccess={handleGoogleSuccess} 
-                                    onError={() => alert("Google Login Failed")}
+                                    onError={() => toast.error("Google Login Failed")}
                                     shape="pill"
                                 />
                             </div>
