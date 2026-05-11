@@ -3,6 +3,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
+import {toast} from "react-hot-toast";
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('users');
@@ -58,7 +59,7 @@ const AdminDashboard = () => {
             });
             setBorrowRequests(prev => prev.map(r => r._id === id ? { ...r, status } : r));
         } catch (err) {
-            alert('Failed to update status');
+            toast.error('Failed to update status');
         }
     };
 
@@ -80,7 +81,7 @@ const AdminDashboard = () => {
             setUsers(res.data);
         } catch (err) {
             console.error(err);
-            alert('Failed to fetch users');
+            toast.error('Failed to fetch users');
         }
         setLoading(false);
     };
@@ -92,7 +93,7 @@ const AdminDashboard = () => {
             setBooks(res.data);
         } catch (err) {
             console.error(err);
-            alert('Failed to fetch books');
+            toast.error('Failed to fetch books');
         }
         setLoading(false);
     };
@@ -110,9 +111,9 @@ const AdminDashboard = () => {
             fetchAllTags();
         } catch (err) {
             if (err.response?.status === 409) {
-                alert('Tag already exists');
+                toast('Tag already exists');
             } else {
-                alert('Failed to create tag');
+                toast.error('Failed to create tag');
             }
         }
     };
@@ -126,7 +127,7 @@ const AdminDashboard = () => {
             });
             fetchAllTags();
         } catch (err) {
-            alert('Failed to delete tag');
+            toast.error('Failed to delete tag');
         }
     };
 
@@ -141,7 +142,7 @@ const AdminDashboard = () => {
             setEditTagName('');
             fetchAllTags();
         } catch (err) {
-            alert('Failed to update tag');
+            toast.error('Failed to update tag');
         }
     };
 
@@ -166,7 +167,7 @@ const AdminDashboard = () => {
     const handleAddBook = async (e) => {
         e.preventDefault();
         if (!newBookFile) {
-            alert('Please select a PDF file');
+            toast('Please select a PDF file');
             return;
         }
         try {
@@ -193,7 +194,7 @@ const AdminDashboard = () => {
                 );
             }
 
-            alert('Book added successfully');
+            toast.success('Book added successfully');
             setShowAddBookModal(false);
             setNewBook({ title: '', author: '', category: '', description: '', authorBio: '', selectedTagIds: [] });
             setNewBookFile(null);
@@ -201,7 +202,7 @@ const AdminDashboard = () => {
             fetchBooks();
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.msg || 'Failed to add book');
+            toast.error(err.response?.data?.msg || 'Failed to add book');
         }
     };
 
@@ -227,14 +228,14 @@ const AdminDashboard = () => {
                 { headers: { 'x-auth-token': token } }
             );
 
-            alert('Book updated successfully');
+            toast.success('Book updated successfully');
             setShowEditBookModal(false);
             setSelectedBook(null);
             setEditCoverFile(null);
             fetchBooks();
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.msg || 'Failed to update book');
+            toast.error(err.response?.data?.msg || 'Failed to update book');
         }
     };
 
@@ -246,7 +247,7 @@ const AdminDashboard = () => {
             });
             fetchUsers();
         } catch (err) {
-            alert('Failed to delete user');
+            toast.error('Failed to delete user');
         }
     };
 
@@ -258,7 +259,7 @@ const AdminDashboard = () => {
             });
             fetchBooks();
         } catch (err) {
-            alert('Failed to delete book');
+            toast.error('Failed to delete book');
         }
     };
 

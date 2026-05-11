@@ -1,6 +1,7 @@
 import axios from "axios";
 import {createContext, useState, useEffect} from "react";
 import API_URL from "../config/api";
+import {toast} from "react-hot-toast";
 
 export const AuthContext = createContext()
 
@@ -61,7 +62,8 @@ export const AuthProvider = ({children}) => {
         if (!emailRegex.test(email)) {
             setError('enter a valid email address');
             console.log("enter a valid email address");
-            alert("enter a valid email address");
+            // alert("enter a valid email address");
+            toast.error("Please enter a valid email address");
             return;
         } else {
             try {

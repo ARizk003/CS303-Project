@@ -1,10 +1,11 @@
-import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from "react-router-dom";
+import React, {useContext, useState} from 'react';
+import {Link, useNavigate} from "react-router-dom";
 import axios from "axios";
-import { AuthContext } from '../context/AuthContext';
-import { GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from "jwt-decode";
+import {AuthContext} from '../context/AuthContext';
+import {GoogleLogin} from '@react-oauth/google';
+import {jwtDecode} from "jwt-decode";
 import API_URL from '../config/api';
+import {toast, Toaster} from "react-hot-toast";
 
 function Signup() {
     const [name, setName] = useState('');
@@ -15,31 +16,35 @@ function Signup() {
     const [loadingOtp, setLoadingOtp] = useState(false);
     const [isGoogleSignup, setIsGoogleSignup] = useState(false);
 
-    const { signup, login } = useContext(AuthContext);
+    const {signup, login} = useContext(AuthContext);
     const navigate = useNavigate();
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!emailRegex.test(email)) {
-            alert("Enter a valid email address");
+            // alert("Enter a valid email address");
+            toast.error('Email address is invalid');
             return;
         }
         if (!name || !password) {
-            alert("Please fill all fields");
+            // alert("Please fill all fields");
+            toast.error('Please fill all fields');
             return;
+
         }
 
         setLoadingOtp(true);
         try {
-            await axios.post(`${API_URL}/api/auth/send-otp`, { email });
+            await axios.post(`${API_URL}/api/auth/send-otp`, {email});
             setShowOtp(true);
             setIsGoogleSignup(false);
             alert("OTP sent to your email!");
         } catch (err) {
-            alert("Error sending OTP. Please try again.");
+            // alert("Error sending OTP. Please try again.");
+            toast.error('Error sending OTP. Please try again');
             console.error(err);
         }
         setLoadingOtp(false);
@@ -48,32 +53,35 @@ function Signup() {
 
     const verifyOtp = async () => {
         if (!otp) {
-            alert("Please enter the OTP");
+            // alert("Please enter the OTP");
+            toast.error('Please enter the OTP');
             return;
         }
         try {
-            
-            await axios.post(`${API_URL}/api/auth/verify-otp`, { email, otp });
+
+            await axios.post(`${API_URL}/api/auth/verify-otp`, {email, otp});
 
             if (isGoogleSignup) {
-                
+
                 const res = await axios.post(`${API_URL}/api/auth/register`, {
                     username: name,
                     email,
-                    password: Math.random().toString(36).slice(-8) 
+                    password: Math.random().toString(36).slice(-8)
                 });
                 login(res.data.token, res.data.user);
             } else {
-                
-                const result = await signup({ username: name, email, password });
+
+                const result = await signup({username: name, email, password});
                 if (!result.success) {
-                    alert(result.msg);
+                    // alert(result.msg);
+                    toast.error(result.msg);
                     return;
                 }
             }
             navigate("/");
         } catch (err) {
             alert(err.response?.data?.msg || "Invalid OTP. Please try again.");
+
         }
     };
 
@@ -88,21 +96,28 @@ function Signup() {
         setIsGoogleSignup(true);
 
         try {
-            await axios.post(`${API_URL}/api/auth/send-otp`, { email: googleEmail });
+            await axios.post(`${API_URL}/api/auth/send-otp`, {email: googleEmail});
             setShowOtp(true);
-            alert("OTP sent to your email!");
+            // alert("OTP sent to your email!");
+            toast.success('OTP sent to your email!');
         } catch (err) {
             console.log(err);
-            alert("Error sending OTP");
+            // alert("Error sending OTP");
+            toast.error('Error sending OTP. Please try again.')
         }
     };
 
     return (
         <div className="container-fluid vh-100 d-flex align-items-center justify-content-center"
-             style={{ background: "#f0f2f5", fontFamily: "'Poppins', sans-serif" }}>
-
+             style={{background: "#f0f2f5", fontFamily: "'Poppins', sans-serif"}}>
             <div className="card shadow-lg border-0"
-                 style={{ width: "90%", maxWidth: "1200px", borderRadius: "30px", overflow: "hidden", background: "#fdfaf6" }}>
+                 style={{
+                     width: "90%",
+                     maxWidth: "1200px",
+                     borderRadius: "30px",
+                     overflow: "hidden",
+                     background: "#fdfaf6"
+                 }}>
 
                 <div className="row g-0">
                     <div className="col-lg-7 d-none d-lg-block"
@@ -112,10 +127,18 @@ function Signup() {
                              backgroundPosition: "center",
                              position: "relative"
                          }}>
-                        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.4)" }}></div>
-                        <div className="h-100 d-flex flex-column justify-content-center p-5 text-white" style={{ position: "relative", zIndex: 2 }}>
+                        <div style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            height: "100%",
+                            background: "rgba(0,0,0,0.4)"
+                        }}></div>
+                        <div className="h-100 d-flex flex-column justify-content-center p-5 text-white"
+                             style={{position: "relative", zIndex: 2}}>
                             <h1 className="fw-bold display-2 mb-4">JOIN US</h1>
-                            <p className="fs-3 fw-light" style={{ maxWidth: "500px" }}>
+                            <p className="fs-3 fw-light" style={{maxWidth: "500px"}}>
                                 "The more that you learn, the more places you'll go."
                             </p>
                         </div>
@@ -133,30 +156,39 @@ function Signup() {
                                     <form onSubmit={handleSubmit}>
                                         <div className="mb-3">
                                             <label className="form-label fw-bold">Full Name</label>
-                                            <input type="text" className="form-control form-control-lg border-0 shadow-sm py-3"
-                                                   style={{ borderRadius: "15px", background: "#fff" }} required
-                                                   value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
+                                            <input type="text"
+                                                   className="form-control form-control-lg border-0 shadow-sm py-3"
+                                                   style={{borderRadius: "15px", background: "#fff"}} required
+                                                   value={name} onChange={(e) => setName(e.target.value)}
+                                                   placeholder="John Doe"/>
                                         </div>
                                         <div className="mb-3">
                                             <label className="form-label fw-bold">Email Address</label>
-                                            <input type="email" className="form-control form-control-lg border-0 shadow-sm py-3"
-                                                   style={{ borderRadius: "15px", background: "#fff" }} required
-                                                   value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
+                                            <input type="email"
+                                                   className="form-control form-control-lg border-0 shadow-sm py-3"
+                                                   style={{borderRadius: "15px", background: "#fff"}} required
+                                                   value={email} onChange={(e) => setEmail(e.target.value)}
+                                                   placeholder="name@example.com"/>
                                         </div>
                                         <div className="mb-3">
                                             <label className="form-label fw-bold">Password</label>
-                                            <input type="password" className="form-control form-control-lg border-0 shadow-sm py-3"
-                                                   style={{ borderRadius: "15px", background: "#fff" }} required
-                                                   onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                                            <input type="password"
+                                                   className="form-control form-control-lg border-0 shadow-sm py-3"
+                                                   style={{borderRadius: "15px", background: "#fff"}} required
+                                                   onChange={(e) => setPassword(e.target.value)}
+                                                   placeholder="••••••••"/>
                                         </div>
                                         <button type="submit" className="btn btn-dark btn-lg w-100 py-3 mt-3 fw-bold"
-                                                style={{ borderRadius: "15px", background: "#2c3e50" }} disabled={loadingOtp}>
+                                                style={{borderRadius: "15px", background: "#2c3e50"}}
+                                                disabled={loadingOtp}>
                                             {loadingOtp ? "Sending OTP..." : "Sign Up"}
                                         </button>
                                     </form>
 
-                                   <p className="text-center mt-4">
-                                        Already have an account? <Link to="/login" className="fw-bold text-decoration-none" style={{color: "#C5A059"}}>Login</Link>
+                                    <p className="text-center mt-4">
+                                        Already have an account? <Link to="/login"
+                                                                       className="fw-bold text-decoration-none"
+                                                                       style={{color: "#C5A059"}}>Login</Link>
                                     </p>
 
                                     <div className="text-center my-3 text-muted small">OR</div>
@@ -173,11 +205,17 @@ function Signup() {
                                 <div className="text-center py-4">
                                     <h3 className="fw-bold mb-4">Verify OTP</h3>
                                     <p className="text-muted mb-4">We sent a code to <strong>{email}</strong></p>
-                                    <input type="text" className="form-control form-control-lg text-center mb-4 border-0 shadow-sm py-3"
-                                           style={{ letterSpacing: "8px", fontSize: "1.5rem", borderRadius: "15px" }}
-                                           onChange={(e) => setOtp(e.target.value)} placeholder="000000" maxLength={6} />
+                                    <input type="text"
+                                           className="form-control form-control-lg text-center mb-4 border-0 shadow-sm py-3"
+                                           style={{letterSpacing: "8px", fontSize: "1.5rem", borderRadius: "15px"}}
+                                           onChange={(e) => setOtp(e.target.value)} placeholder="000000" maxLength={6}/>
                                     <button className="btn btn-lg w-100 py-3 fw-bold"
-                                            onClick={verifyOtp} style={{ borderRadius: "15px", background: "#C5A059", border: "none", color: "white" }}>
+                                            onClick={verifyOtp} style={{
+                                        borderRadius: "15px",
+                                        background: "#C5A059",
+                                        border: "none",
+                                        color: "white"
+                                    }}>
                                         Verify & Register
                                     </button>
                                     <button className="btn btn-link mt-3 text-muted"

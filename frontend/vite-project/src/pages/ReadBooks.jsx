@@ -5,6 +5,7 @@ import StarRating from "../components/StarRating.jsx";
 import { AuthContext } from '../context/AuthContext';
 import TopRatedBadge from "../components/Topratedbadge.jsx";
 import API_URL from "../config/api";
+import {toast} from "react-hot-toast";
 
 const PDFJS_VERSION = "3.11.174";
 const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
@@ -219,9 +220,9 @@ export default function ReadBook() {
         { headers: { "x-auth-token": token } }
       );
       setCurrentRating(res.data.your_rating);
-      alert(res.data.msg);
+      toast.error(res.data.msg);
     } catch (err) {
-      alert(err.response?.data?.msg || "Failed to submit rating");
+      toast.error(err.response?.data?.msg || "Failed to submit rating");
     }
   };
 
@@ -255,12 +256,12 @@ export default function ReadBook() {
           { text: commentText },
           { headers: { "x-auth-token": token } }
       );
-      alert("Comment added successfully!");
+      toast.success("Comment added successfully!");
       setCommentText("");
       setMode("choose");
       fetchComments();
     } catch (err) {
-      alert(err.response?.data?.msg || "Failed to add comment. Please try again.");
+      toast.error(err.response?.data?.msg || "Failed to add comment. Please try again.");
     }
     setCommentLoading(false);
   };

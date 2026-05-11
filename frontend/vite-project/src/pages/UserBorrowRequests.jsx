@@ -4,7 +4,7 @@ import API_URL from '../config/api';
 
 
 const UserBorrowRequests = () => {
-    // 1. ADDED: State to hold the borrow requests
+
     const [borrowRequests, setBorrowRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState('myList');
@@ -30,7 +30,7 @@ const UserBorrowRequests = () => {
         setLoading(false);
     };
 
-    // Helper function to color-code status badges
+
     const getStatusBadgeClass = (status) => {
         switch(status) {
             case 'approved': return 'bg-success';
@@ -58,7 +58,7 @@ const UserBorrowRequests = () => {
                             </button>
                         </div>
 
-                        {/* 2. ADDED: Render the fetched data */}
+
                         {loading ? (
                             <div className="text-center mt-5">
                                 <div className="spinner-border" role="status">
@@ -75,7 +75,7 @@ const UserBorrowRequests = () => {
                                     {borrowRequests.map((request) => (
                                         <div key={request._id} className="list-group-item p-4 d-flex justify-content-between align-items-center">
                                             <div>
-                                                {/* Assuming your backend populates 'book' with title and author */}
+
                                                 <h5 className="mb-1">
                                                     {request.book ? request.book.title : 'Deleted Book'}
                                                 </h5>
