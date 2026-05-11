@@ -2,7 +2,6 @@
   "expo": {
     "name": "my-app",
     "slug": "my-app",
-    "owner": "Alaa_123",
     "scheme": "myapp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,13 +21,20 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.alaa_123.myapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "31f64c49-3fb1-4561-b94b-497b12f75474"
+      }
+    }
   }
 }
