@@ -88,7 +88,7 @@ function PdfViewer({ bookId, token }) {
     #loading{color:#8e7f68;text-align:center;padding:40px 20px;font-family:sans-serif}
     #error{color:#c0392b;text-align:center;padding:40px 20px;font-family:sans-serif;display:none}
   </style>
-</head><body>
+  </head><body>
   <div id="loading">Rendering pages…</div>
   <div id="viewer"></div>
   <div id="error"></div>
@@ -96,7 +96,7 @@ function PdfViewer({ bookId, token }) {
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    let activeTool = 'pen', activeColor = '#FFD700', isDrawing = false, currentCanvas = null;
+    let activeTool = 'pen', activeColor = '#FFD700', isDrawing = false, currentCanvas = null, isDrawingMode = false;
     const b64 = ${JSON.stringify(base64)};
     const binary = atob(b64);
     const bytes = new Uint8Array(binary.length);
@@ -104,6 +104,27 @@ function PdfViewer({ bookId, token }) {
     const viewer = document.getElementById('viewer');
     const loadingEl = document.getElementById('loading');
     const errorEl = document.getElementById('error');
+function attachDrawing(canvas) {
+      function start(e) {
+        if (!isDrawingMode) return;
+        e.preventDefault(); isDrawing = true; currentCanvas = canvas;
+        const pos = getPos(canvas, e);
+        const ctx = canvas.getContext('2d');
+        applyTool(ctx); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+      }
+      function move(e) {
+        if (!isDrawingMode || !isDrawing || currentCanvas !== canvas) return;
+        e.preventDefault();
+        const pos = getPos(canvas, e);
+        const ctx = canvas.getContext('2d');
+        applyTool(ctx); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+      }
+      function stop(e) {
+        if (!isDrawingMode || !isDrawing || currentCanvas !== canvas) return;
+        e.preventDefault(); isDrawing = false;
+        canvas.getContext('2d').beginPath();
+      }
     pdfjsLib.getDocument({ data: bytes }).promise
       .then(pdf => {
         loadingEl.style.display = 'none';
@@ -232,6 +253,11 @@ function PdfViewer({ bookId, token }) {
         const cmd = JSON.parse(e.data);
         if (cmd.type === 'SET_TOOL')  activeTool  = cmd.tool;
         if (cmd.type === 'SET_COLOR') activeColor = cmd.color;
+        if (cmd.type === 'TOGGLE_MODE') {
+          isDrawingMode = cmd.isDrawing;
+          if (isDrawingMode) document.body.classList.add('drawing-mode');
+          else document.body.classList.remove('drawing-mode');
+        }
         if (cmd.type === 'CLEAR') {
           document.querySelectorAll('.draw-canvas').forEach(c => {
             const ctx = c.getContext('2d');
@@ -249,12 +275,16 @@ function PdfViewer({ bookId, token }) {
       <View style={styles.readerToolbar}>
         <TouchableOpacity
           style={[styles.toolToggleBtn, toolbarVisible && styles.toolToggleBtnActive]}
-          onPress={() => setToolbarVisible(v => !v)}
+          onPress={() => {
+            const next = !toolbarVisible;
+            setToolbarVisible(next);
+            sendCmd({ type: 'TOGGLE_MODE', isDrawing: next });
+          }}
         >
           <Text style={[styles.toolToggleText, toolbarVisible && { color: '#fff' }]}>
             ✏️ {toolbarVisible ? 'Hide Tools' : 'Drawing Tools'}
           </Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
       </View>
 
       {toolbarVisible && (
