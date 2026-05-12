@@ -1,20 +1,15 @@
 import React, {useContext, useState} from 'react';
 import {Link, useNavigate} from "react-router-dom";
-import axios from "axios";
 import {AuthContext} from '../context/AuthContext';
 import {GoogleLogin} from '@react-oauth/google';
 import {jwtDecode} from "jwt-decode";
-import API_URL from '../config/api';
 import {toast, Toaster} from "react-hot-toast";
 
 function Signup() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [otp, setOtp] = useState('');
-    const [showOtp, setShowOtp] = useState(false);
-    const [loadingOtp, setLoadingOtp] = useState(false);
-    const [isGoogleSignup, setIsGoogleSignup] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const {signup, login} = useContext(AuthContext);
     const navigate = useNavigate();
@@ -25,91 +20,60 @@ function Signup() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!emailRegex.test(email)) {
-            // alert("Enter a valid email address");
             toast.error('Email address is invalid');
             return;
         }
         if (!name || !password) {
-            // alert("Please fill all fields");
             toast.error('Please fill all fields');
             return;
-
+            
         }
 
-        setLoadingOtp(true);
+        setLoading(true);
         try {
-            await axios.post(`${API_URL}/api/auth/send-otp`, {email});
-            setShowOtp(true);
-            setIsGoogleSignup(false);
-            alert("OTP sent to your email!");
+            const result = await signup({username: name, email, password});
+            
+            if (result.success) {
+                toast.success('Registration successful!');
+                navigate("/");
+            } else {
+                toast.error(result.msg || 'Registration failed');
+            }
         } catch (err) {
-            // alert("Error sending OTP. Please try again.");
-            toast.error('Error sending OTP. Please try again');
+            toast.error('Something went wrong. Please try again');
             console.error(err);
         }
-        setLoadingOtp(false);
+        setLoading(false);
     };
 
-
-    const verifyOtp = async () => {
-        if (!otp) {
-            // alert("Please enter the OTP");
-            toast.error('Please enter the OTP');
-            return;
-        }
-        try {
-
-            await axios.post(`${API_URL}/api/auth/verify-otp`, {email, otp});
-
-            if (isGoogleSignup) {
-
-                const res = await axios.post(`${API_URL}/api/auth/register`, {
-                    username: name,
-                    email,
-                    password: Math.random().toString(36).slice(-8)
-                });
-                login(res.data.token, res.data.user);
-            } else {
-
-                const result = await signup({username: name, email, password});
-                if (!result.success) {
-                    // alert(result.msg);
-                    toast.error(result.msg);
-                    return;
-                }
-            }
-            navigate("/");
-        } catch (err) {
-            alert(err.response?.data?.msg || "Invalid OTP. Please try again.");
-
-        }
-    };
-
-    // Google Login handler
     const handleGoogleSuccess = async (credentialResponse) => {
         const decoded = jwtDecode(credentialResponse.credential);
         const googleEmail = decoded.email;
         const googleName = decoded.name;
 
-        setEmail(googleEmail);
-        setName(googleName);
-        setIsGoogleSignup(true);
-
         try {
-            await axios.post(`${API_URL}/api/auth/send-otp`, {email: googleEmail});
-            setShowOtp(true);
-            // alert("OTP sent to your email!");
-            toast.success('OTP sent to your email!');
+            const result = await signup({
+                username: googleName, 
+                email: googleEmail, 
+                password: Math.random().toString(36).slice(-8) 
+            });
+
+            if (result.success) {
+                toast.success('Google Signup successful!');
+                navigate("/");
+            } else {
+                toast.error(result.msg);
+            }
         } catch (err) {
+            toast.error('Error with Google Signup');
             console.log(err);
-            // alert("Error sending OTP");
-            toast.error('Error sending OTP. Please try again.')
         }
     };
 
     return (
         <div className="container-fluid vh-100 d-flex align-items-center justify-content-center"
              style={{background: "#f0f2f5", fontFamily: "'Poppins', sans-serif"}}>
+            <Toaster /> 
             <div className="card shadow-lg border-0"
                  style={{
                      width: "90%",
@@ -151,79 +115,53 @@ function Signup() {
                                 <p className="text-muted fs-5">Start your journey with Learnova today.</p>
                             </div>
 
-                            {!showOtp ? (
-                                <>
-                                    <form onSubmit={handleSubmit}>
-                                        <div className="mb-3">
-                                            <label className="form-label fw-bold">Full Name</label>
-                                            <input type="text"
-                                                   className="form-control form-control-lg border-0 shadow-sm py-3"
-                                                   style={{borderRadius: "15px", background: "#fff"}} required
-                                                   value={name} onChange={(e) => setName(e.target.value)}
-                                                   placeholder="John Doe"/>
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="form-label fw-bold">Email Address</label>
-                                            <input type="email"
-                                                   className="form-control form-control-lg border-0 shadow-sm py-3"
-                                                   style={{borderRadius: "15px", background: "#fff"}} required
-                                                   value={email} onChange={(e) => setEmail(e.target.value)}
-                                                   placeholder="name@example.com"/>
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="form-label fw-bold">Password</label>
-                                            <input type="password"
-                                                   className="form-control form-control-lg border-0 shadow-sm py-3"
-                                                   style={{borderRadius: "15px", background: "#fff"}} required
-                                                   onChange={(e) => setPassword(e.target.value)}
-                                                   placeholder="••••••••"/>
-                                        </div>
-                                        <button type="submit" className="btn btn-dark btn-lg w-100 py-3 mt-3 fw-bold"
-                                                style={{borderRadius: "15px", background: "#2c3e50"}}
-                                                disabled={loadingOtp}>
-                                            {loadingOtp ? "Sending OTP..." : "Sign Up"}
-                                        </button>
-                                    </form>
-
-                                    <p className="text-center mt-4">
-                                        Already have an account? <Link to="/login"
-                                                                       className="fw-bold text-decoration-none"
-                                                                       style={{color: "#C5A059"}}>Login</Link>
-                                    </p>
-
-                                    <div className="text-center my-3 text-muted small">OR</div>
-
-                                    <div className="d-flex justify-content-center">
-                                        <GoogleLogin
-                                            onSuccess={handleGoogleSuccess}
-                                            onError={() => console.log('Google signup failed')}
-                                            shape="pill"
-                                        />
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="text-center py-4">
-                                    <h3 className="fw-bold mb-4">Verify OTP</h3>
-                                    <p className="text-muted mb-4">We sent a code to <strong>{email}</strong></p>
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-3">
+                                    <label className="form-label fw-bold">Full Name</label>
                                     <input type="text"
-                                           className="form-control form-control-lg text-center mb-4 border-0 shadow-sm py-3"
-                                           style={{letterSpacing: "8px", fontSize: "1.5rem", borderRadius: "15px"}}
-                                           onChange={(e) => setOtp(e.target.value)} placeholder="000000" maxLength={6}/>
-                                    <button className="btn btn-lg w-100 py-3 fw-bold"
-                                            onClick={verifyOtp} style={{
-                                        borderRadius: "15px",
-                                        background: "#C5A059",
-                                        border: "none",
-                                        color: "white"
-                                    }}>
-                                        Verify & Register
-                                    </button>
-                                    <button className="btn btn-link mt-3 text-muted"
-                                            onClick={() => setShowOtp(false)}>
-                                        ← Go Back
-                                    </button>
+                                           className="form-control form-control-lg border-0 shadow-sm py-3"
+                                           style={{borderRadius: "15px", background: "#fff"}} required
+                                           value={name} onChange={(e) => setName(e.target.value)}
+                                           placeholder="John Doe"/>
                                 </div>
-                            )}
+                                <div className="mb-3">
+                                    <label className="form-label fw-bold">Email Address</label>
+                                    <input type="email"
+                                           className="form-control form-control-lg border-0 shadow-sm py-3"
+                                           style={{borderRadius: "15px", background: "#fff"}} required
+                                           value={email} onChange={(e) => setEmail(e.target.value)}
+                                           placeholder="name@example.com"/>
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label fw-bold">Password</label>
+                                    <input type="password"
+                                           className="form-control form-control-lg border-0 shadow-sm py-3"
+                                           style={{borderRadius: "15px", background: "#fff"}} required
+                                           value={password} onChange={(e) => setPassword(e.target.value)}
+                                           placeholder="••••••••"/>
+                                </div>
+                                <button type="submit" className="btn btn-dark btn-lg w-100 py-3 mt-3 fw-bold"
+                                        style={{borderRadius: "15px", background: "#2c3e50"}}
+                                        disabled={loading}>
+                                    {loading ? "Registering..." : "Sign Up"}
+                                </button>
+                            </form>
+
+                            <p className="text-center mt-4">
+                                Already have an account? <Link to="/login"
+                                                               className="fw-bold text-decoration-none"
+                                                               style={{color: "#C5A059"}}>Login</Link>
+                            </p>
+
+                            <div className="text-center my-3 text-muted small">OR</div>
+
+                            <div className="d-flex justify-content-center">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => console.log('Google signup failed')}
+                                    shape="pill"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

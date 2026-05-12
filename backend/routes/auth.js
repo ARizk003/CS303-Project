@@ -7,8 +7,8 @@ const auth = require("../middleware/auth");
 const rateLimit = require("express-rate-limit");
 
 const forgotPasswordLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 5,                   
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -16,14 +16,12 @@ const forgotPasswordLimiter = rateLimit({
   }
 });
 
-router.post("/send-otp",    authController.sendOtp);
-router.post("/verify-otp",  authController.verifyOtp);
-router.post("/register",    authController.registerUser);
-router.post("/login",       authController.loginUser);
-router.get("/me",           auth, authController.getMe);
-router.put("/update-role",  auth, authController.updateUserRole);
-router.get("/users",        auth, authController.getAllUsers);
+router.post("/register",        authController.registerUser);
+router.post("/login",           authController.loginUser);
+router.post("/google-login",    authController.googleLogin);
+router.get("/me",               auth, authController.getMe);
+router.put("/update-role",      auth, authController.updateUserRole);
+router.get("/users",            auth, authController.getAllUsers);
 router.post("/forgot-password", forgotPasswordLimiter, authController.forgotPassword);
 router.post("/reset-password",  authController.resetPassword);
-router.post("/google-login", authController.googleLogin);
 module.exports = router;
