@@ -1,85 +1,136 @@
 # 📚 LearNova — E-Library System
 
-LearnNova is a full-stack digital library platform that allows users to search, read, and borrow books online. It includes a web frontend, a REST API backend, and a cross-platform mobile application.
+## 🌐 Live Demo
 
----
-## 📊 Project Tracking
+[https://cs-303-project-8zh4meoxi-heba29715-1160s-projects.vercel.app/](https://cs-303-project-8zh4meoxi-heba29715-1160s-projects.vercel.app/)
 
-[View Project Excel Sheet](https://docs.google.com/spreadsheets/d/1yq1QS1ojBvzc_Qf9eHTxTndbc7mCfVMq9iKjjMgmhhs/edit?gid=0#gid=0)
+## 🎨 Presentation
 
-## 👥 Team
-
-| Name | GitHub |
-|------|--------|
-| Alaa Ashraf | [@AlaaAshraf17](https://github.com/AlaaAshraf17) |
-| Ahmed Arafa | [@darkmaster02004](https://github.com/darkmaster02004) |
-| AbdelRahman Rizk | [@ARizk003](https://github.com/ARizk003) |
-| Mariam Mohamed | [@MariamOsmann](https://github.com/MariamOsmann) |
-| Hend Ashraf | [@Hend-Salem](https://github.com/Hend-Salem) |
-| Heba Mohamed | [@hebamohameedd](https://github.com/hebamohameedd) |
-
+[https://canva.link/2hxgexjrk8ax25x](https://canva.link/2hxgexjrk8ax25x)
 
 ---
 
-## 🚩 Problem Statement
+# 📖 About The Project
 
-Traditional libraries require physical attendance, manual search, and paper-based borrowing processes that are time-consuming. Limited working hours further restrict student access to resources. LearNova solves all of this by providing a fully digital, 24/7 accessible library system.
+LearnNova is a full-stack digital library platform that enables users to search, read, annotate, and borrow books online through both web and mobile applications.
 
----
-
-## 🎯 Project Goals
-
-| Goal | Description |
-|------|-------------|
-| Improve Accessibility | Enable users to access books and resources anytime, from anywhere |
-| Simplify Management | Digitize borrowing records and book management for admins |
-| Enhance User Experience | Provide a fast, searchable, and user-friendly interface |
+The system modernizes traditional library services by providing a seamless digital experience with 24/7 accessibility, advanced book management, and an interactive PDF reading environment.
 
 ---
 
-## ✨ Features
+# 🚩 Problem Statement
 
-### 👤 User
-- Register and log in securely
-- Search for books by title, author, or category
-- Read books online with a built-in PDF viewer
-- Annotate PDFs with pen, highlighter, and eraser tools
-- Borrow physical books by submitting a request
-- Manage personal profile and borrowing history
-- Rate books and leave comments
+Traditional libraries depend heavily on manual processes and physical attendance, which can limit accessibility and efficiency for students and readers.
 
-### 🛠️ Admin
-- Add, edit, and delete books (with cover image and PDF upload)
-- Manage users and their roles
-- Review and approve/reject borrow requests
-- Manage book tags and categories
-- Monitor the full library from a dedicated dashboard
+Users often face:
+
+* Limited working hours
+* Slow manual searching
+* Paper-based borrowing systems
+* Difficulty accessing resources remotely
+
+LearNova solves these challenges by offering a fully digital library system accessible anytime and anywhere.
 
 ---
 
-## 🛠️ Tech Stack
+# 🎯 Project Goals
 
-### Frontend
-- React.js
-- HTML5 / JavaScript (ES6)
-- Tailwind CSS
-
-### Backend
-- Node.js
-- Express.js
-- REST API
-- MongoDB
-
-### Mobile
-- React Native
-- Expo Go SDK 54
-- WebView + PDF.js
+| Goal                         | Description                                          |
+| ---------------------------- | ---------------------------------------------------- |
+| Improve Accessibility        | Enable users to access books anytime from any device |
+| Simplify Management          | Digitize book records and borrowing operations       |
+| Enhance User Experience      | Provide a fast and intuitive user interface          |
+| Support Cross-Platform Usage | Deliver both web and mobile experiences              |
 
 ---
 
-## 📁 Project Structure
+# ✨ Features
 
+## 👤 User Features
+
+* Secure authentication system
+* Search books by title, author, or category
+* Read books online using a built-in PDF viewer
+* Annotate PDFs using:
+
+  * Pen tool
+  * Highlighter
+  * Eraser
+* Submit borrow requests for physical books
+* View borrowing history
+* Manage personal profile
+* Rate books and leave comments
+
+---
+
+## 🛠️ Admin Features
+
+* Add new books with cover image and PDF upload
+* Edit and delete books
+* Manage users and permissions
+* Approve or reject borrow requests
+* Manage categories and tags
+* Monitor system activity through admin dashboard
+
+---
+
+# 📱 Platforms
+
+## 🌍 Web Application
+
+Built for desktop and browser users with responsive UI and fast navigation.
+
+## 📱 Mobile Application
+
+Cross-platform mobile app built using React Native and Expo.
+
+---
+
+# 🛠️ Tech Stack
+
+## Frontend
+
+* React.js
+* JavaScript (ES6)
+* HTML5
+* Tailwind CSS
+
+## Backend
+
+* Node.js
+* Express.js
+* REST API
+* MongoDB
+
+## Mobile
+
+* React Native
+* Expo SDK 54
+* PDF.js
+* WebView
+
+---
+
+# 🧩 System Architecture
+
+```text
+Frontend (React.js)
+        │
+        ▼
+ REST API (Express.js)
+        │
+        ▼
+   MongoDB Database
+        ▲
+        │
+Mobile App (React Native)
 ```
+
+---
+
+# 📂 Project Structure
+
+```text
 CS303-Project/
 ├── backend/
 │   └── src/
@@ -89,44 +140,59 @@ CS303-Project/
 │       ├── models/
 │       ├── routers/
 │       └── services/
+│
 ├── frontend/
 │   └── src/
 │       ├── components/
 │       ├── context/
 │       └── pages/
-└── mobile/my-app/
-    └── app/
-        ├── auth/
-        ├── components/
-        ├── config/
-        └── context/
+│
+└── mobile/
+    └── my-app/
+        └── app/
+            ├── auth/
+            ├── components/
+            ├── config/
+            └── context/
 ```
 
 ---
 
-## 🚀 Getting Started
+# 🚀 Getting Started
 
-### Prerequisites
-- Node.js v18+
-- npm or yarn
-- Expo CLI
-- MongoDB
+## Prerequisites
 
-### Backend
+Make sure you have installed:
+
+* Node.js v18+
+* npm or yarn
+* MongoDB
+* Expo CLI
+
+---
+
+## ⚙️ Backend Setup
+
 ```bash
 cd backend
 npm install
 npm start
 ```
 
-### Frontend
+---
+
+## 💻 Frontend Setup
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### Mobile
+---
+
+## 📱 Mobile Setup
+
 ```bash
 cd mobile/my-app
 npm install
@@ -135,18 +201,58 @@ npx expo start
 
 ---
 
-## 👥 User Flow
+# 👥 User Flow
 
-1. Register or log into the system
-2. Search for books by title, author, or category
-3. View book details, tags, and ratings
-4. Read online or submit a borrow request
-5. Manage profile and borrowing history
+1. Register or log in
+2. Search for books
+3. View book details and ratings
+4. Read or annotate PDFs online
+5. Submit borrow requests
+6. Manage borrowing history and profile
 
-## 🔐 Admin Flow
+---
 
-1. Log in to the admin dashboard
-2. Add, update, or remove books
-3. Manage users and roles
-4. Approve or reject borrow requests
-5. Manage tags and categories
+# 🔐 Admin Flow
+
+1. Log in to dashboard
+2. Add or update books
+3. Manage users and permissions
+4. Review borrowing requests
+5. Organize categories and tags
+
+---
+
+# 📊 Project Tracking
+
+Google Sheets Tracking:
+[https://docs.google.com/spreadsheets/d/1yq1QS1ojBvzc_Qf9eHTxTndbc7mCfVMq9iKjjMgmhhs/edit?gid=0#gid=0](https://docs.google.com/spreadsheets/d/1yq1QS1ojBvzc_Qf9eHTxTndbc7mCfVMq9iKjjMgmhhs/edit?gid=0#gid=0)
+
+---
+
+# 🚀 Future Improvements
+
+* AI-based book recommendations
+* Real-time notifications
+* Dark mode support
+* Multi-language support
+* Online reservation system
+* Advanced analytics dashboard
+
+---
+
+# 👥 Team Members
+
+| Name             | GitHub                                                                   |
+| ---------------- | ------------------------------------------------------------------------ |
+| Alaa Ashraf      | [https://github.com/AlaaAshraf17](https://github.com/AlaaAshraf17)       |
+| Ahmed Arafa      | [https://github.com/darkmaster02004](https://github.com/darkmaster02004) |
+| AbdelRahman Rizk | [https://github.com/ARizk003](https://github.com/ARizk003)               |
+| Mariam Mohamed   | [https://github.com/MariamOsmann](https://github.com/MariamOsmann)       |
+| Hend Ashraf      | [https://github.com/Hend-Salem](https://github.com/Hend-Salem)           |
+| Heba Mohamed     | [https://github.com/hebamohameedd](https://github.com/hebamohameedd)     |
+
+---
+
+# ⭐ Conclusion
+
+LearNova provides a modern digital library experience that combines accessibility, usability, and efficient management into one integrated platform across web and mobile environments.
