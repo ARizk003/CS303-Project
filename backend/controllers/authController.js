@@ -1,9 +1,7 @@
 const bcrypt      = require("bcryptjs");
 const jwt         = require("jsonwebtoken");
-const nodemailer  = require("nodemailer");
 const User        = require("../models/User");
 const { jwtSecret, jwtExpiration } = require("../config/jwt");
-//
 const {
   generateOtp,
   hashOtp,
@@ -12,61 +10,6 @@ const {
   sendPasswordChangedEmail
 } = require("../services/passwordResetService");
 
-const otpStore = {};
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-exports.sendOtp = async (req, res) => {
-  const { email } = req.body;
-  try {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore[email] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 };
-
-    await transporter.sendMail({
-      from: `"LearnNova" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Your OTP Code",
-      html: `
-        <div style="font-family: Arial; text-align: center;">
-          <h2>LearnNova Verification</h2>
-          <p>Your OTP code is:</p>
-          <h1 style="color:#4CAF50;">${otp}</h1>
-          <p>This code is valid for 10 minutes.</p>
-        </div>
-      `
-    });
-
-    res.json({ msg: "OTP sent to your email." });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
-exports.verifyOtp = (req, res) => {
-  const { email, otp } = req.body;
-  const record = otpStore[email];
-
-  if (!record) {
-    return res.status(400).json({ msg: "OTP not found. Request a new one." });
-  }
-  if (Date.now() > record.expiresAt) {
-    delete otpStore[email];
-    return res.status(400).json({ msg: "OTP expired." });
-  }
-  if (record.otp !== otp) {
-    return res.status(400).json({ msg: "Invalid OTP." });
-  }
-
-  delete otpStore[email];
-  res.json({ msg: "Email verified successfully." });
-};
 
 exports.registerUser = async (req, res) => {
   const { username, email, password } = req.body;
@@ -109,7 +52,23 @@ exports.loginUser = async (req, res) => {
     }
 
     const token = signToken(user);
-    // console.log();
+    res.json({ token, user: safeUser(user) });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+
+exports.googleLogin = async (req, res) => {
+  const { email, username } = req.body;
+  try {
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({ username, email, password: "google-auth", role: "student" });
+      await user.save();
+    }
+    const token = signToken(user);
     res.json({ token, user: safeUser(user) });
   } catch (err) {
     console.error(err.message);
@@ -184,7 +143,7 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const otp = generateOtp();
-
+    
     const hashedOtp = hashOtp(otp);
 
 
@@ -203,21 +162,6 @@ exports.forgotPassword = async (req, res) => {
     console.error(err.message);
     res.status(500).send("Server error");
   }
-};
-exports.googleLogin = async (req, res) => {
-    const { email, username } = req.body;
-    try {
-        let user = await User.findOne({ email });
-        if (!user) {
-            user = new User({ username, email, password: "google-auth", role: "student" });
-            await user.save();
-        }
-        const token = signToken(user);
-        res.json({ token, user: safeUser(user) });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server error");
-    }
 };
 
 exports.resetPassword = async (req, res) => {

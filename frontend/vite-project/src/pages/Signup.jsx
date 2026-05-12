@@ -1,18 +1,24 @@
+<<<<<<< Updated upstream
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
+=======
+import React, {useContext, useState} from 'react';
+import {Link, useNavigate} from "react-router-dom";
+import {AuthContext} from '../context/AuthContext';
+import {GoogleLogin} from '@react-oauth/google';
+import {jwtDecode} from "jwt-decode";
+import {toast, Toaster} from "react-hot-toast";
+>>>>>>> Stashed changes
 
 function Signup() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [otp, setOtp] = useState('');
-    const [showOtp, setShowOtp] = useState(false);
-    const [loadingOtp, setLoadingOtp] = useState(false);
-    const [isGoogleSignup, setIsGoogleSignup] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const { signup, login } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -23,27 +29,51 @@ function Signup() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!emailRegex.test(email)) {
+<<<<<<< Updated upstream
             alert("Enter a valid email address");
             return;
         }
         if (!name || !password) {
             alert("Please fill all fields");
             return;
+=======
+            toast.error('Email address is invalid');
+            return;
+        }
+        if (!name || !password) {
+            toast.error('Please fill all fields');
+            return;
+            
+>>>>>>> Stashed changes
         }
 
-        setLoadingOtp(true);
+        setLoading(true);
         try {
+<<<<<<< Updated upstream
             await axios.post("http://localhost:5000/api/auth/send-otp", { email });
             setShowOtp(true);
             setIsGoogleSignup(false);
             alert("OTP sent to your email!");
         } catch (err) {
             alert("Error sending OTP. Please try again.");
+=======
+            const result = await signup({username: name, email, password});
+            
+            if (result.success) {
+                toast.success('Registration successful!');
+                navigate("/");
+            } else {
+                toast.error(result.msg || 'Registration failed');
+            }
+        } catch (err) {
+            toast.error('Something went wrong. Please try again');
+>>>>>>> Stashed changes
             console.error(err);
         }
-        setLoadingOtp(false);
+        setLoading(false);
     };
 
+<<<<<<< Updated upstream
 
     const verifyOtp = async () => {
         if (!otp) {
@@ -77,29 +107,51 @@ function Signup() {
     };
 
     // Google Login handler
+=======
+>>>>>>> Stashed changes
     const handleGoogleSuccess = async (credentialResponse) => {
         const decoded = jwtDecode(credentialResponse.credential);
         const googleEmail = decoded.email;
         const googleName = decoded.name;
 
-        setEmail(googleEmail);
-        setName(googleName);
-        setIsGoogleSignup(true);
-
         try {
+<<<<<<< Updated upstream
             await axios.post("http://localhost:5000/api/auth/send-otp", { email: googleEmail });
             setShowOtp(true);
             alert("OTP sent to your email!");
+=======
+            const result = await signup({
+                username: googleName, 
+                email: googleEmail, 
+                password: Math.random().toString(36).slice(-8) 
+            });
+
+            if (result.success) {
+                toast.success('Google Signup successful!');
+                navigate("/");
+            } else {
+                toast.error(result.msg);
+            }
+>>>>>>> Stashed changes
         } catch (err) {
+            toast.error('Error with Google Signup');
             console.log(err);
+<<<<<<< Updated upstream
             alert("Error sending OTP");
+=======
+>>>>>>> Stashed changes
         }
     };
 
     return (
         <div className="container-fluid vh-100 d-flex align-items-center justify-content-center"
+<<<<<<< Updated upstream
              style={{ background: "#f0f2f5", fontFamily: "'Poppins', sans-serif" }}>
 
+=======
+             style={{background: "#f0f2f5", fontFamily: "'Poppins', sans-serif"}}>
+            <Toaster /> 
+>>>>>>> Stashed changes
             <div className="card shadow-lg border-0"
                  style={{ width: "90%", maxWidth: "1200px", borderRadius: "30px", overflow: "hidden", background: "#fdfaf6" }}>
 
@@ -127,6 +179,7 @@ function Signup() {
                                 <p className="text-muted fs-5">Start your journey with Learnova today.</p>
                             </div>
 
+<<<<<<< Updated upstream
                             {!showOtp ? (
                                 <>
                                     <form onSubmit={handleSubmit}>
@@ -183,8 +236,55 @@ function Signup() {
                                             onClick={() => setShowOtp(false)}>
                                         ← Go Back
                                     </button>
+=======
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-3">
+                                    <label className="form-label fw-bold">Full Name</label>
+                                    <input type="text"
+                                           className="form-control form-control-lg border-0 shadow-sm py-3"
+                                           style={{borderRadius: "15px", background: "#fff"}} required
+                                           value={name} onChange={(e) => setName(e.target.value)}
+                                           placeholder="John Doe"/>
+>>>>>>> Stashed changes
                                 </div>
-                            )}
+                                <div className="mb-3">
+                                    <label className="form-label fw-bold">Email Address</label>
+                                    <input type="email"
+                                           className="form-control form-control-lg border-0 shadow-sm py-3"
+                                           style={{borderRadius: "15px", background: "#fff"}} required
+                                           value={email} onChange={(e) => setEmail(e.target.value)}
+                                           placeholder="name@example.com"/>
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label fw-bold">Password</label>
+                                    <input type="password"
+                                           className="form-control form-control-lg border-0 shadow-sm py-3"
+                                           style={{borderRadius: "15px", background: "#fff"}} required
+                                           value={password} onChange={(e) => setPassword(e.target.value)}
+                                           placeholder="••••••••"/>
+                                </div>
+                                <button type="submit" className="btn btn-dark btn-lg w-100 py-3 mt-3 fw-bold"
+                                        style={{borderRadius: "15px", background: "#2c3e50"}}
+                                        disabled={loading}>
+                                    {loading ? "Registering..." : "Sign Up"}
+                                </button>
+                            </form>
+
+                            <p className="text-center mt-4">
+                                Already have an account? <Link to="/login"
+                                                               className="fw-bold text-decoration-none"
+                                                               style={{color: "#C5A059"}}>Login</Link>
+                            </p>
+
+                            <div className="text-center my-3 text-muted small">OR</div>
+
+                            <div className="d-flex justify-content-center">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => console.log('Google signup failed')}
+                                    shape="pill"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
