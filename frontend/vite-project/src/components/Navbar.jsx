@@ -10,7 +10,7 @@ import { AuthContext } from '../context/AuthContext';
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { user, logout } = useContext(AuthContext);
+  const { user, setUser, logout } = useContext(AuthContext);
   const location = useLocation();
 
   const isAdmin = user && user.role === 'admin';
@@ -20,6 +20,7 @@ const Navbar = () => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+    setUser(JSON.parse(localStorage.getItem('user')));
   }, []);
 
   const toggleMenu = () => setIsOpen(!isOpen);
