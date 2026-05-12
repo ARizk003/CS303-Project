@@ -2,7 +2,7 @@
 
 ## 🌐 Live Demo
 
-[https://cs-303-project-8zh4meoxi-heba29715-1160s-projects.vercel.app/](https://cs-303-project-8zh4meoxi-heba29715-1160s-projects.vercel.app/)
+[https://cs-303-project-eight.vercel.app//](https://cs-303-project-eight.vercel.app/)
 
 ## 🎨 Presentation
 
