@@ -107,8 +107,11 @@ const profileFilter = (_req, file, cb) => {
 
 // multer function is the middleware designed for handling multipart/form-data
 // , the specific POST request type for file uploads
-// multer checks the uploaded file against inlcuded filters, then adds file object to the req object
-// , containing the file and metadata, then passed to controller for further processing (e.g. saving file path to database)
+// multer checks the uploaded file against inlcuded filters, adds file to specified storage(here: cloudinary)
+// , and adds file object to the req object
+// , containing the file and metadata including file path in the storage
+// , then passed to controller for further processing (e.g. saving the path in the DB)
+// , that is, the file is physically stored in the specified storage, and its path is stored in the DB
 const profileUpload = multer({
   // storage: cloudinary
   storage: profileStorage,

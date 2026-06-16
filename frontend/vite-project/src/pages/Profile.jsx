@@ -117,14 +117,14 @@ const Profile = () => {
                         <div className="p-4 text-white text-center" style={{ backgroundColor: '#002147' }}>
                             <div className="mb-3 position-relative d-inline-block">
                                 <img
-                                    src={profile?.image }
+                                    src={profile?.image || user?.image}
                                     alt=""
                                     className="rounded-circle border border-3 border-white"
                                     style={{ width: '120px', height: '120px', objectFit: 'cover' }}
                                 />
                                 <button
                                     className="btn btn-sm rounded-circle position-absolute bottom-0 end-0 p-1 shadow"
-                                    style={{ backgroundColor: '#C5A059', color: '#fff', width: '30px', height: '30px' , top:'80px'}}
+                                    style={{ backgroundColor: '#cabfa9', color: '#fff', width: '30px', height: '30px' , top:'80px'}}
                                     // open the hidden input onclick
                                     onClick={() => fileInputRef.current.click()}
                                     // disables clicking while uploading
@@ -147,6 +147,7 @@ const Profile = () => {
 
                             {editName ? (
                                 <div className="d-flex gap-2 justify-content-center">
+                                    {/* updates newName on input change */}
                                     <input
                                         type="text"
                                         className="form-control form-control-sm rounded-pill"
@@ -155,6 +156,7 @@ const Profile = () => {
                                         style={{ maxWidth: '200px' }}
                                         autoFocus
                                     />
+                                    {/* updates name by newName in DB and local storage on clicking */}
                                     <button
                                         className="btn btn-sm btn-light rounded-pill px-3"
                                         onClick={handleNameUpdate}
@@ -196,14 +198,14 @@ const Profile = () => {
                                 <p className="mb-0 text-dark">{profile?.email || user?.email}</p>
                             </div>
 
-                            <div className="mb-3">
+                            {/* <div className="mb-3">
                                 <small className="text-muted fw-bold d-block mb-1">ROLE</small>
                                 <p className="mb-0">
                                     <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: profile?.role === 'admin' ? '#002147' : '#C5A059', color: '#fff' }}>
                                         {profile?.role || user?.role || 'User'}
                                     </span>
                                 </p>
-                            </div>
+                            </div> */}
 
                             <div>
                                 <small className="text-muted fw-bold d-block mb-1">JOINED</small>

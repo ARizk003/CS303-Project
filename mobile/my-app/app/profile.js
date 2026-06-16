@@ -1,4 +1,4 @@
-import { useContext, useState, useCallback } from 'react';
+import { useContext, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,96 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
+// non-completed
+// import { Camera } from 'expo-camera';
 import { AuthContext } from "../context/AuthContext";
 import { BASE_URL } from '../config/api';
+const API_URL = "http://localhost:5000";
 const FALLBACK_AVATAR = 'https://ui-avatars.com/api/?name=User&background=C5A059&color=fff&size=120';
 
 export default function Profile() {
-  const { user, logout, updateProfileImage } = useContext(AuthContext);
+  const { user, setUser, logout, updateProfileImage } = useContext(AuthContext);
+  const [profile, setProfile]   = useState(null);
+  const [editName, setEditName] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [hasPermission, setHasPermission] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting]   = useState(false);
   const router = useRouter();
 
+    useEffect(() => {
+        if (!user) {
+            navigate('/login', { state: { message: 'Please sign in to view your profile.' } });
+            return;
+        }
+        fetchProfile();
+    }, [user?.id]);
+
+    // camera permission - not completed
+  // useEffect(() => {
+  //   (async () => {
+  //    const { status } = await Camera.getCameraPermissionsAsync(); // Check first
+  //     if (status === 'undetermined') {
+  //       const permissionResult = await Camera.requestCameraPermissionsAsync();
+  //       setHasPermission(permissionResult.status === 'granted');
+  //     } else {
+  //       setHasPermission(true);
+  //     }
+  //   })();
+  // }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/users/profile`, {
+        headers: { 'x-auth-token': token }
+      });
+      setProfile(res.data);
+
+      if(setUser){
+        const updatedUser = { 
+          ...user, 
+          name: res.data.name,
+          image: res.data.image 
+        };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    setLoading(false);
+    };
+
+    const onRefresh = async () => {
+      setRefreshing(true);
+      await fetchProfile();
+      setRefreshing(false);
+    };
+
+    const handleNameUpdate = async () => {
+        if (!newName.trim()) return;
+        try {
+            const res = await axios.put(`${API_URL}/api/users/profile`, 
+                { name: newName },
+                { headers: { 'x-auth-token': token } }
+            );
+            setProfile(res.data);
+            if (setUser) setUser({ ...user, name: newName });
+            localStorage.setItem('user', user ? JSON.stringify({ ...user, username: newName}) : null);
+            setEditName(false);
+        } catch (err) {
+            alert('Failed to update name');
+        }
+    };
+
  
   const handleImageUpload = useCallback(async () => {
+    // uses expo imagePicker library 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
@@ -32,21 +106,27 @@ export default function Profile() {
       );
       return;
     }
+    // opens device image library
     const result = await ImagePicker.launchImageLibraryAsync({
+      // show images only
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      // enable editing
       allowsEditing: true,
       aspect: [1, 1],
+      // compress image and reduce quality to 70%
       quality: 0.7,
     });
     if (result.canceled) return;
 
     const asset = result.assets[0];
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    // mimeType: a string including type and format of file(e,g 'image/jpeg')
     const mimeType = asset.mimeType || '';
     if (mimeType && !allowedTypes.includes(mimeType.toLowerCase())) {
       Alert.alert('Invalid Format', 'Please select a JPG or PNG image.');
       return;
     }
+    
     const filename = asset.uri.split('/').pop();
     const ext = filename.split('.').pop().toLowerCase();
     const type = ext === 'png' ? 'image/png' : 'image/jpeg';
@@ -117,6 +197,22 @@ export default function Profile() {
       ],
     );
   }, [user, updateProfileImage]);
+
+  // non-completed
+  // const takePicture = async () => {
+  //   if (cameraRef.current) {
+  //     const { status } = await Camera.getCameraPermissionsAsync();
+  //     if (status !== 'granted') {
+  //       alert('Camera permission is required to take a picture.');
+  //       const permissionResult = await Camera.requestCameraPermissionsAsync();
+  //       setHasPermission(permissionResult.status === 'granted');
+  //       return;
+  //     }
+  //     const photo = await cameraRef.current.takePictureAsync();
+  //     setImage(photo.uri);
+  //   }
+  // };
+
   if (!user) {
     return (
       <View style={styles.guestContainer}>
@@ -141,12 +237,17 @@ export default function Profile() {
     );
   }
 
-  const avatarSource = user.image
-    ? { uri: user.image }
-    : { uri: FALLBACK_AVATAR };
+  // user image might be stale, a profile object with fresh data is prioritized
+  const avatarSource = profile.image
+    ? { uri: profile.image }
+    : { uri: user.image };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} 
+        showsVerticalScrollIndicator={false}
+              refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.avatarWrapper}
@@ -155,7 +256,7 @@ export default function Profile() {
           activeOpacity={0.8}
         >
           <Image
-            source={avatarSource}
+            source={profile?.image}
             style={styles.avatarImage}
             defaultSource={{ uri: FALLBACK_AVATAR }}
           />
@@ -188,7 +289,7 @@ export default function Profile() {
         </View>
         <TouchableOpacity onPress={handleImageUpload} disabled={uploading}>
           <Text style={styles.changePhotoText}>
-            {uploading ? 'Uploading…' : 'Tap photo to change'}
+            {uploading ? 'Uploading…' : ''}
           </Text>
         </TouchableOpacity>
       </View>
@@ -213,10 +314,10 @@ export default function Profile() {
       <View style={styles.menuSection}>
         <Text style={styles.menuTitle}>Account Settings</Text>
 
-        <TouchableOpacity style={styles.menuItem} onPress={handleImageUpload} disabled={uploading || deleting}>
+        {/* <TouchableOpacity style={styles.menuItem} onPress={handleImageUpload} disabled={uploading || deleting}>
           <Text style={styles.menuItemText}>🖼️ Change Profile Photo</Text>
           {uploading && <ActivityIndicator size="small" color="#C5A059" style={{ marginLeft: 8 }} />}
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
 
         {user.role !== "admin" && (
